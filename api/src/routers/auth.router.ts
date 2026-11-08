@@ -30,14 +30,14 @@ authRouter.post(
       ipAddress: req.ip ?? 'unknown',
     });
     const { refreshToken, csrfToken, refreshExpiresIn, ...response } = result;
-    setAuthCookies(res, refreshToken, csrfToken, refreshExpiresIn);
+    setAuthCookies(res, refreshToken, csrfToken, refreshExpiresIn, req.baseUrl);
     res.status(200).json({ ...response, csrfToken });
   },
 );
 
 authRouter.post('/csrf', requireTrustedOrigin, rateLimit('refresh', 30), async (req, res) => {
   const result = await authService.issueCsrfToken(req.cookies?.refresh_token);
-  setCsrfCookie(res, result.csrfToken, result.refreshExpiresIn);
+  setCsrfCookie(res, result.csrfToken, result.refreshExpiresIn, req.baseUrl);
   res.json({ csrfToken: result.csrfToken });
 });
 
@@ -52,7 +52,7 @@ authRouter.post('/refresh', requireTrustedOrigin, rateLimit('refresh', 30), asyn
     },
   );
   const { refreshToken, csrfToken, refreshExpiresIn, ...response } = result;
-  setAuthCookies(res, refreshToken, csrfToken, refreshExpiresIn);
+  setAuthCookies(res, refreshToken, csrfToken, refreshExpiresIn, req.baseUrl);
   res.status(200).json({ ...response, csrfToken });
 });
 
@@ -80,7 +80,7 @@ authRouter.delete(
     const auth = getAuthContext(req);
     const { sessionId } = sessionParamsSchema.parse(req.params);
     await sessionsRepository.revoke(sessionId, auth.userId);
-    if (sessionId === auth.sessionId) clearAuthCookies(res);
+    if (sessionId === auth.sessionId) clearAuthCookies(res, req.baseUrl);
     res.sendStatus(204);
   },
 );
@@ -88,13 +88,13 @@ authRouter.delete(
 authRouter.post('/logout', requireAuth, async (req, res) => {
   const auth = getAuthContext(req);
   await sessionsRepository.revoke(auth.sessionId, auth.userId);
-  clearAuthCookies(res);
+  clearAuthCookies(res, req.baseUrl);
   res.sendStatus(204);
 });
 
 authRouter.post('/logout-all', requireAuth, async (req, res) => {
   const auth = getAuthContext(req);
   await sessionsRepository.revokeAllForUser(auth.userId);
-  clearAuthCookies(res);
+  clearAuthCookies(res, req.baseUrl);
   res.sendStatus(204);
 });

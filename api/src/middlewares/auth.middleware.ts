@@ -39,6 +39,30 @@ export const requireAuth: RequestHandler = async (req, _res, next) => {
   next();
 };
 
+export const optionalAuth: RequestHandler = async (req, _res, next) => {
+  const authorization = req.get('Authorization');
+  if (!authorization) {
+    next();
+    return;
+  }
+
+  const match = authorization.match(/^Bearer ([A-Za-z0-9_-]+)$/);
+  const token = match?.[1];
+  if (!token) {
+    next(new UnauthorizedException('Invalid or expired access token'));
+    return;
+  }
+
+  const session = await sessionsRepository.findByAccessHash(hashToken(token));
+  if (!session) {
+    next(new UnauthorizedException('Invalid or expired access token'));
+    return;
+  }
+
+  req.auth = { sessionId: session.id, userId: session.userId };
+  next();
+};
+
 export function getAuthContext(req: Express.Request) {
   if (!req.auth) throw new UnauthorizedException();
   return req.auth;

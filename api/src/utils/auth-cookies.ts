@@ -4,7 +4,6 @@ import { env } from '@/config/env';
 const cookieOptions = {
   secure: env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  path: '/auth',
 };
 
 export function setAuthCookies(
@@ -12,24 +11,32 @@ export function setAuthCookies(
   refreshToken: string,
   csrfToken: string,
   refreshExpiresIn: number,
+  path = '/auth',
 ) {
   res.cookie('refresh_token', refreshToken, {
     ...cookieOptions,
+    path,
     httpOnly: true,
     maxAge: refreshExpiresIn,
   });
-  setCsrfCookie(res, csrfToken, refreshExpiresIn);
+  setCsrfCookie(res, csrfToken, refreshExpiresIn, path);
 }
 
-export function setCsrfCookie(res: Response, csrfToken: string, refreshExpiresIn: number) {
+export function setCsrfCookie(
+  res: Response,
+  csrfToken: string,
+  refreshExpiresIn: number,
+  path = '/auth',
+) {
   res.cookie('csrf_token', csrfToken, {
     ...cookieOptions,
+    path,
     httpOnly: false,
     maxAge: refreshExpiresIn,
   });
 }
 
-export function clearAuthCookies(res: Response) {
-  res.clearCookie('refresh_token', { ...cookieOptions, httpOnly: true });
-  res.clearCookie('csrf_token', { ...cookieOptions, httpOnly: false });
+export function clearAuthCookies(res: Response, path = '/auth') {
+  res.clearCookie('refresh_token', { ...cookieOptions, path, httpOnly: true });
+  res.clearCookie('csrf_token', { ...cookieOptions, path, httpOnly: false });
 }
