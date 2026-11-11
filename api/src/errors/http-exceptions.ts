@@ -38,6 +38,12 @@ export class TooManyRequestsException extends BaseError {
   }
 }
 
+export class ServiceUnavailableException extends BaseError {
+  constructor(message = 'Service unavailable') {
+    super(503, ErrorCode.SERVICE_UNAVAILABLE, message);
+  }
+}
+
 export class UpstreamException extends BaseError {
   constructor(message = 'Upstream service error') {
     super(502, ErrorCode.UPSTREAM_ERROR, message);

@@ -6,6 +6,10 @@ import { hashToken, tokenMatchesHash, tokensMatch } from '@/middlewares/auth.mid
 import type { RegisterBody } from '@/schemas/register.schema';
 import type { LoginBody } from '@/schemas/login.schema';
 import { sessionsRepository } from '@/repositories/sessions.repository';
+import {
+  authIdentitiesRepository,
+  type GoogleProfile,
+} from '@/repositories/auth-identities.repository';
 
 const ACCESS_TTL_SECONDS = 15 * 60;
 const IDLE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -44,6 +48,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    return this.createSession(user, metadata);
+  }
+
+  async loginWithGoogle(profile: GoogleProfile, metadata: SessionMetadata) {
+    const user = await authIdentitiesRepository.findOrCreateGoogleUser(profile);
     return this.createSession(user, metadata);
   }
 

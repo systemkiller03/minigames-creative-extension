@@ -1,30 +1,55 @@
 import { z } from 'zod';
 
-const schema = z.object({
-  NODE_ENV: z.enum(['development', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(3000),
-  DATABASE_URL: z.string().min(1),
-  REDIS_URL: z.string().min(1),
-  UPSTREAM_BASE_URL: z.string().min(1),
-  CORS_ORIGINS: z
-    .string()
-    .min(1)
-    .transform((value) => value.split(',').map((origin) => origin.trim()))
-    .pipe(
-      z
-        .array(
-          z.url().refine((value) => {
-            try {
-              const url = new URL(value);
-              return ['http:', 'https:'].includes(url.protocol) && url.origin === value;
-            } catch {
-              return false;
-            }
-          }, 'Must be an origin with no path, query, or fragment'),
-        )
-        .min(1),
-    ),
-});
+const httpUrl = z.url().refine((value) => ['http:', 'https:'].includes(new URL(value).protocol));
+
+const schema = z
+  .object({
+    NODE_ENV: z.enum(['development', 'production']).default('development'),
+    PORT: z.coerce.number().int().positive().default(3000),
+    DATABASE_URL: z.string().min(1),
+    REDIS_URL: z.string().min(1),
+    UPSTREAM_BASE_URL: z.string().min(1),
+    GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+    GOOGLE_REDIRECT_URI: httpUrl.optional(),
+    FRONTEND_AUTH_REDIRECT_URL: httpUrl.optional(),
+    CORS_ORIGINS: z
+      .string()
+      .min(1)
+      .transform((value) => value.split(',').map((origin) => origin.trim()))
+      .pipe(
+        z
+          .array(
+            z.url().refine((value) => {
+              try {
+                const url = new URL(value);
+                return ['http:', 'https:'].includes(url.protocol) && url.origin === value;
+              } catch {
+                return false;
+              }
+            }, 'Must be an origin with no path, query, or fragment'),
+          )
+          .min(1),
+      ),
+  })
+  .superRefine((value, context) => {
+    const googleOAuthValues = [
+      value.GOOGLE_CLIENT_ID,
+      value.GOOGLE_CLIENT_SECRET,
+      value.GOOGLE_REDIRECT_URI,
+      value.FRONTEND_AUTH_REDIRECT_URL,
+    ];
+    const configuredValues = googleOAuthValues.filter(Boolean).length;
+
+    if (configuredValues > 0 && configuredValues < googleOAuthValues.length) {
+      context.addIssue({
+        code: 'custom',
+        path: ['GOOGLE_CLIENT_ID'],
+        message:
+          'Configure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, and FRONTEND_AUTH_REDIRECT_URL together',
+      });
+    }
+  });
 
 const parsed = schema.safeParse(process.env);
 

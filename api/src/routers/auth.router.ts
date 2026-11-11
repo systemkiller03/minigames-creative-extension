@@ -9,11 +9,38 @@ import {
 import { loginSchema } from '@/schemas/login.schema';
 import { registerSchema } from '@/schemas/register.schema';
 import { sessionParamsSchema } from '@/schemas/session.schema';
+import { googleCallbackQuerySchema } from '@/schemas/google-oauth.schema';
 import { authService } from '@/services/auth.service';
+import { googleOAuthService } from '@/services/google-oauth.service';
 import { sessionsRepository } from '@/repositories/sessions.repository';
 import { clearAuthCookies, setAuthCookies, setCsrfCookie } from '@/utils/auth-cookies';
 
 export const authRouter = Router();
+
+authRouter.get('/google/login', async (_req, res) => {
+  const authorizationUrl = await googleOAuthService.getAuthorizationUrl();
+  res.redirect(authorizationUrl);
+});
+
+authRouter.get(
+  '/google/callback',
+  validateMiddleware({ query: googleCallbackQuerySchema }),
+  async (req, res) => {
+    const query = googleCallbackQuerySchema.parse(req.query);
+    const { profile, redirectTarget } = await googleOAuthService.authenticate(query);
+    const result = await authService.loginWithGoogle(profile, {
+      userAgent: req.get('User-Agent') ?? '',
+      ipAddress: req.ip ?? 'unknown',
+    });
+    const { refreshToken, csrfToken, refreshExpiresIn } = result;
+
+    setAuthCookies(res, refreshToken, csrfToken, refreshExpiresIn, req.baseUrl);
+    const frontendRedirect = new URL(redirectTarget);
+    frontendRedirect.searchParams.set('provider', 'google');
+    frontendRedirect.searchParams.set('status', 'success');
+    res.redirect(frontendRedirect.toString());
+  },
+);
 
 authRouter.post('/register', validateMiddleware({ body: registerSchema }), async (req, res) => {
   const user = await authService.register(req.body);
