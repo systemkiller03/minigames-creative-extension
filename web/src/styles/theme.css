@@ -143,7 +143,7 @@
   --shadow-hard: 4px 4px 0 #111111;
   --container-content: 1680px;
   --container-featured: 1920px;
-  --transition-property-carousel-card: flex-basis, opacity;
+  --transition-property-carousel-card: flex-basis, margin, opacity, box-shadow;
 
   --breakpoint-mobile-max: 480px;
   --breakpoint-tablet: 768px;

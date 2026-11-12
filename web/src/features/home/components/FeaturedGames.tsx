@@ -37,15 +37,22 @@ function getSlotClasses(slot: CarouselSlot): string {
     }
 }
 
-function getVisibleGames(games: FeaturedGame[], currentIndex: number): FeaturedGame[] {
-    const visibleCount = Math.min(games.length, MAX_VISIBLE_CARDS);
-    const firstOffset = -Math.floor(visibleCount / 2);
+type CardPosition = { visible: boolean; slot: CarouselSlot; order: number };
 
-    return Array.from({ length: visibleCount }, (_, index) => {
-        const offset = firstOffset + index;
-        const gameIndex = (currentIndex + offset + games.length) % games.length;
-        return games[gameIndex]!;
-    });
+/**
+ * Every game stays mounted so flex-basis/opacity can transition between slots.
+ * `order` keeps cards leaving on the left in front and entering on the right behind,
+ * so they shrink and grow in place instead of jumping across the track.
+ */
+function getCardPosition(index: number, current: number, count: number): CardPosition {
+    const visibleCount = Math.min(count, MAX_VISIBLE_CARDS);
+    const position = (index - current + Math.floor(visibleCount / 2) + count) % count;
+
+    if (position < visibleCount) {
+        return { visible: true, slot: getSlot(position, visibleCount), order: position };
+    }
+
+    return { visible: false, slot: 'peek', order: position === count - 1 ? -1 : position };
 }
 
 export function FeaturedGames() {
@@ -137,7 +144,6 @@ export function FeaturedGames() {
         );
     }
 
-    const visibleGames = getVisibleGames(games, currentIndex);
     const move = (direction: 1 | -1): void => {
         setCurrentIndex((index) => (index + direction + games.length) % games.length);
     };
@@ -208,7 +214,7 @@ export function FeaturedGames() {
             <div
                 aria-label="Featured games"
                 aria-roledescription="carousel"
-                className="flex cursor-grab touch-pan-y select-none items-stretch justify-center gap-size-1 active:cursor-grabbing"
+                className="flex cursor-grab touch-pan-y select-none items-stretch justify-center active:cursor-grabbing"
                 role="group"
                 onPointerDown={(event) => {
                     if (event.isPrimary && (event.pointerType !== 'mouse' || event.button === 0)) {
@@ -223,19 +229,30 @@ export function FeaturedGames() {
                 }}
                 onPointerUp={handlePointerUp}
             >
-                {visibleGames.map((game, index) => {
-                    const slot = getSlot(index, visibleGames.length);
-                    const isFeatured = slot === 'featured';
+                {games.map((game, index) => {
+                    const { visible, slot, order } = getCardPosition(
+                        index,
+                        currentIndex,
+                        games.length,
+                    );
+                    const isFeatured = visible && slot === 'featured';
 
                     return (
                         <Link
                             aria-current={isFeatured ? 'true' : undefined}
+                            aria-hidden={visible ? undefined : true}
                             aria-label={`View ${game.name} details in the library`}
-                            className={`relative flex h-carousel-card-height shrink-0 overflow-hidden rounded-large border-button border-on-primary bg-white transition-carousel-card duration-fast ease-fast focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-tertiary tablet-up:h-carousel-card-height-tablet desktop-up:h-carousel-card-height-wide desktop-up:rounded-extra-large desktop-up:shadow-level-2 ${getSlotClasses(slot)}`}
+                            className={`relative flex h-carousel-card-height shrink-0 overflow-hidden rounded-large bg-white transition-carousel-card duration-700 ease-in-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-tertiary tablet-up:h-carousel-card-height-tablet desktop-up:h-carousel-card-height-wide desktop-up:rounded-extra-large ${
+                                visible
+                                    ? `mx-[4px] border-button border-on-primary desktop-up:shadow-level-2 ${getSlotClasses(slot)}`
+                                    : 'pointer-events-none mx-0 basis-0 border-0 opacity-0'
+                            }`}
                             draggable={false}
                             key={game.slug}
                             onClick={handleCardClick}
                             search={{ game: game.slug }}
+                            style={{ order }}
+                            tabIndex={visible ? undefined : -1}
                             to="/library"
                         >
                             <img
@@ -244,7 +261,7 @@ export function FeaturedGames() {
                                 className="h-full w-full object-cover"
                                 draggable={false}
                                 height="384"
-                                loading={index > 2 ? 'lazy' : 'eager'}
+                                loading={visible ? 'eager' : 'lazy'}
                                 src={game.cardImage}
                                 width="816"
                             />
