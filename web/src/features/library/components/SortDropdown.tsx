@@ -43,12 +43,12 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
     }, [open]);
 
     return (
-        <div className="relative" ref={rootRef}>
+        <div className="relative w-full above-mobile:w-auto" ref={rootRef}>
             <button
                 aria-controls={menuId}
                 aria-expanded={open}
                 aria-haspopup="true"
-                className="inline-flex h-dropdown-trigger-height-compact cursor-pointer items-center gap-size-1 rounded-extra-large border-button border-solid border-on-primary bg-white pl-button-medium-x pr-size-1 font-inter text-label-large font-bold leading-normal text-on-primary focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring above-tablet:h-dropdown-trigger-height-desktop"
+                className="inline-flex h-dropdown-trigger-height-compact w-full cursor-pointer items-center justify-between gap-size-1 rounded-extra-large border-button border-solid border-on-primary bg-white py-button-small-y pl-button-small-x pr-size-1 font-inter text-label-medium above-mobile:w-auto above-mobile:justify-start above-mobile:text-label-large font-bold leading-normal text-on-primary focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring above-tablet:h-dropdown-trigger-height-desktop"
                 onClick={() => setOpen((previous) => !previous)}
                 type="button"
             >

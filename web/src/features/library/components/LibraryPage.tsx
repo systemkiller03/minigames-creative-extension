@@ -15,9 +15,9 @@ function CardSkeleton() {
     return (
         <div
             aria-hidden="true"
-            className="flex animate-pulse flex-col overflow-hidden rounded-large border-[2.5px] border-solid border-outline bg-white above-tablet:h-[200px] above-tablet:flex-row"
+            className="flex animate-pulse flex-col overflow-hidden rounded-large border-[2.5px] border-solid border-outline bg-white min-[600px]:h-[152px] min-[600px]:flex-row desktop-up:h-[200px]"
         >
-            <div className="h-40 bg-outline above-mobile:h-auto above-mobile:w-[200px] above-tablet:w-[320px]" />
+            <div className="h-40 bg-outline min-[600px]:h-auto min-[600px]:w-[270px] desktop-up:w-[320px]" />
             <div className="flex flex-1 flex-col justify-between gap-size-2 p-size-2">
                 <div className="h-6 w-2/3 rounded-small bg-outline" />
                 <div className="h-12 rounded-small bg-outline" />
@@ -81,18 +81,18 @@ export function LibraryPage() {
 
     return (
         <div className="flex flex-col">
-            <section className="flex flex-col gap-size-1 px-size-2 py-size-4 above-mobile:px-size-5 above-mobile:py-size-5 desktop-up:px-size-15">
-                <h1 className="font-inter text-display-medium font-bold leading-normal text-on-primary above-tablet:text-display-large">
+            <section className="flex flex-col gap-size-1 p-size-2 above-mobile:px-size-5 above-mobile:py-size-3 desktop-up:px-size-15 desktop-up:py-size-5">
+                <h1 className="font-inter text-display-small font-bold leading-normal text-on-primary above-mobile:text-display-medium desktop-up:text-display-large">
                     Game Library
                 </h1>
-                <p className="text-body-medium font-medium text-on-bg above-tablet:text-body-large">
+                <p className="text-body-small font-medium text-on-bg above-mobile:text-body-medium desktop-up:text-body-large">
                     Browse our collection of casual mini-games
                 </p>
             </section>
 
             <section
                 aria-label="Filters"
-                className="flex flex-col gap-size-2 px-size-2 py-size-2 above-mobile:px-size-5 desktop-up:flex-row desktop-up:items-center desktop-up:justify-between desktop-up:px-size-15"
+                className="flex flex-col gap-size-2 p-size-2 above-mobile:px-size-5 desktop-up:flex-row desktop-up:items-center desktop-up:justify-between desktop-up:px-size-15"
             >
                 {categoriesQuery.isPending ? (
                     <div aria-hidden="true" className="flex gap-size-2">
@@ -120,7 +120,7 @@ export function LibraryPage() {
                         }
                     />
                 )}
-                <div className="flex justify-end">
+                <div className="flex desktop-up:justify-end">
                     <SortDropdown
                         onChange={(next) =>
                             update({
@@ -136,7 +136,7 @@ export function LibraryPage() {
             <section
                 aria-busy={gamesQuery.isFetching}
                 aria-label="Games"
-                className="px-size-2 py-size-2 above-mobile:px-size-5 desktop-up:px-size-15"
+                className="px-size-2 above-mobile:px-size-5 desktop-up:px-size-15"
             >
                 {gamesQuery.isPending ? (
                     <div
@@ -168,7 +168,7 @@ export function LibraryPage() {
                 )}
             </section>
 
-            <div className="px-size-2 py-size-5 above-mobile:px-size-5 desktop-up:px-size-15">
+            <div className="px-size-2 py-size-3 above-mobile:p-size-5 desktop-up:px-size-15">
                 <Pagination
                     onChange={(next) => update({ page: next === 1 ? undefined : next })}
                     page={page}

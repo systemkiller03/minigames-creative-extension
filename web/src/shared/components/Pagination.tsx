@@ -18,7 +18,7 @@ export function Pagination({ page, totalPages, onChange }: PaginationProps) {
 
     return (
         <nav aria-label="Pagination" className="flex justify-center">
-            <ul className="flex list-none flex-wrap items-center justify-center gap-pagination-gap">
+            <ul className="flex list-none flex-wrap items-center justify-center gap-size-1 desktop-up:gap-pagination-gap">
                 <li>
                     <button
                         aria-label="Previous page"
