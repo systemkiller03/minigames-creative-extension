@@ -7,6 +7,7 @@ import { ErrorState } from '@/shared/components/ErrorState';
 import { Pagination } from '@/shared/components/Pagination';
 import { FilterChips } from './FilterChips';
 import { GameCard } from './GameCard';
+import { GameDetailDialog } from './GameDetailDialog';
 import { SortDropdown } from './SortDropdown';
 
 export const LIBRARY_PAGE_SIZE = 6;
@@ -23,6 +24,7 @@ function CardSkeleton() {
                 <div className="h-12 rounded-small bg-outline" />
                 <div className="h-8 w-1/3 rounded-small bg-outline" />
             </div>
+            {search.game ? <GameDetailDialog key={search.game} slug={search.game} /> : null}
         </div>
     );
 }
@@ -175,6 +177,7 @@ export function LibraryPage() {
                     totalPages={totalPages}
                 />
             </div>
+            {search.game ? <GameDetailDialog key={search.game} slug={search.game} /> : null}
         </div>
     );
 }
