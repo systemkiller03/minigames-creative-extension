@@ -25,7 +25,15 @@ const INCREMENT_MULTI_RATE_LIMIT = `
 `;
 
 export function rateLimit(
-  action: 'login' | 'refresh' | 'password-change' | 'account-delete' | 'catalog' | 'favourite',
+  action:
+    | 'login'
+    | 'refresh'
+    | 'password-change'
+    | 'account-delete'
+    | 'catalog'
+    | 'favourite'
+    | 'comment'
+    | 'comment-like',
   limit: number,
 ): RequestHandler {
   return async (req, _res, next) => {

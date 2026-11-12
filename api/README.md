@@ -89,3 +89,7 @@ Design: `docs/catalog-design.md`. The gateway proxies the shared MiniGames upstr
 - `PUT` / `DELETE /me/favourites/:slug` — idempotent. Postgres is the source of truth; the
   upstream toggle is called only when state changes, and undone locally if it fails.
 - Deleting an account removes its likes from the upstream (best effort).
+- `GET /catalog/games/:slug/comments` (`limit`, `sort=newest|oldest`) — public; signed-in reads are
+  uncached and carry `isLikedByCurrentUser`. `POST` the same path with `{ text }` (1–500 chars,
+  10 per minute) posts under the account's name. `POST /catalog/comments/:id/like` toggles a like
+  and returns the new state.

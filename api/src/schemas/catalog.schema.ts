@@ -19,3 +19,18 @@ export const gameParamsSchema = z.object({
 });
 
 export type GamesQuery = z.infer<typeof gamesQuerySchema>;
+
+export const commentsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  sort: z.enum(['newest', 'oldest']).default('newest'),
+});
+
+export const createCommentSchema = z.object({
+  text: z.string().trim().min(1).max(500),
+});
+
+export const commentParamsSchema = z.object({
+  commentId: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+});
+
+export type CommentsQuery = z.infer<typeof commentsQuerySchema>;

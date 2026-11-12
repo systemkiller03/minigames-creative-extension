@@ -27,6 +27,14 @@ export class FakeUpstream {
   games: Game[] = [];
   likes = new Map<string, Set<string>>();
   calls: { method: 'GET' | 'POST'; path: string; query?: object; body?: unknown }[] = [];
+  comments: {
+    commentId: string;
+    slug: string;
+    authorName: string;
+    text: string;
+    likes: Set<string>;
+    createdAt: string;
+  }[] = [];
   /** When set, every call throws this (simulates the upstream being down). */
   failure: Error | null = null;
 
@@ -42,6 +50,7 @@ export class FakeUpstream {
       makeGame('delta-arcade', 'Delta Arcade', 'arcade', 3.8),
     ];
     this.likes = new Map();
+    this.comments = [];
     this.calls = [];
     this.failure = null;
   }
@@ -92,6 +101,19 @@ export class FakeUpstream {
         },
       } as T;
     }
+    const list = /^\/api\/games\/([^/]+)\/comments$/.exec(path);
+    if (list) {
+      const slug = decodeURIComponent(list[1]!);
+      if (!this.games.some((game) => game.slug === slug)) throw new NotFoundException();
+      let items = this.comments.filter((comment) => comment.slug === slug);
+      if (query.sort === 'newest') items = [...items].reverse();
+      const total = items.length;
+      if (query.limit !== undefined) items = items.slice(0, Number(query.limit));
+      return {
+        data: items.map((comment) => this.commentView(comment, query.userEmail as string)),
+        meta: { totalComments: total, returnedCount: items.length },
+      } as T;
+    }
     throw new Error(`FakeUpstream: unhandled GET ${path}`);
   }
 
@@ -99,6 +121,32 @@ export class FakeUpstream {
     this.calls.push({ method: 'POST', path, body });
     if (this.failure) throw this.failure;
 
+    const like = /^\/api\/comments\/([^/]+)\/like$/.exec(path);
+    if (like) {
+      const comment = this.comments.find((item) => item.commentId === like[1]);
+      if (!comment) throw new NotFoundException();
+      const email = (body as { userEmail: string }).userEmail;
+      if (!comment.likes.delete(email)) comment.likes.add(email);
+      return {
+        data: { isLikedByCurrentUser: comment.likes.has(email), likesCount: comment.likes.size },
+      } as T;
+    }
+    const add = /^\/api\/games\/([^/]+)\/comments$/.exec(path);
+    if (add) {
+      const slug = decodeURIComponent(add[1]!);
+      if (!this.games.some((game) => game.slug === slug)) throw new NotFoundException();
+      const input = body as { authorName: string; text: string };
+      const comment = {
+        commentId: `00000000-0000-4000-8000-${String(this.comments.length + 1).padStart(12, '0')}`,
+        slug,
+        authorName: input.authorName,
+        text: input.text,
+        likes: new Set<string>(),
+        createdAt: new Date().toISOString(),
+      };
+      this.comments.push(comment);
+      return { data: this.commentView(comment, '') } as T;
+    }
     const match = /^\/api\/games\/([^/]+)\/favorite$/.exec(path);
     if (!match) throw new Error(`FakeUpstream: unhandled POST ${path}`);
     const slug = decodeURIComponent(match[1]!);
@@ -115,6 +163,17 @@ export class FakeUpstream {
 
   fail() {
     this.failure = new UpstreamException('boom');
+  }
+
+  private commentView(comment: FakeUpstream['comments'][number], email: string) {
+    return {
+      commentId: comment.commentId,
+      authorName: comment.authorName,
+      text: comment.text,
+      likesCount: comment.likes.size,
+      isLikedByCurrentUser: comment.likes.has(email),
+      createdAt: comment.createdAt,
+    };
   }
 
   private listGames(query: Record<string, unknown>) {

@@ -34,6 +34,7 @@ tags:
     description: Catalog and favourites
   - name: Favourites
     description: Catalog and favourites
+  - name: Comments
   - name: Health
 
 paths:
@@ -515,6 +516,103 @@ paths:
         '502': { $ref: '#/components/responses/UpstreamError' }
         '503': { $ref: '#/components/responses/UpstreamError' }
 
+  /catalog/games/{slug}/comments:
+    get:
+      tags: [Comments]
+      summary: Comments for a game
+      description: |
+        Public. With a bearer token, `isLikedByCurrentUser` reflects that user (and the response is
+        not cached). `meta.totalComments` is the full count even when `limit` trims the list.
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - {
+            name: sort,
+            in: query,
+            schema: { type: string, enum: [newest, oldest], default: newest },
+          }
+      responses:
+        '200':
+          description: Comments
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Comment' }
+                  meta:
+                    type: object
+                    properties:
+                      totalComments: { type: integer }
+                      returnedCount: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+    post:
+      tags: [Comments]
+      summary: Post a comment
+      description: The author name is the account's own name. Limited to 10 per minute per user.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, minLength: 1, maxLength: 500 }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/Comment' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
+  /catalog/comments/{commentId}/like:
+    post:
+      tags: [Comments]
+      summary: Like or unlike a comment (toggle)
+      description: A toggle, like the upstream. Use the response to learn the new state.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: commentId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: New state
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      isLikedByCurrentUser: { type: boolean }
+                      likesCount: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
   /me/favourites:
     get:
       tags: [Favourites]
@@ -771,6 +869,15 @@ components:
         isFavorited:
           type: boolean
           description: Present only when the request is authenticated
+    Comment:
+      type: object
+      properties:
+        commentId: { type: string, format: uuid }
+        authorName: { type: string }
+        text: { type: string }
+        likesCount: { type: integer }
+        isLikedByCurrentUser: { type: boolean }
+        createdAt: { type: string, format: date-time }
     GameDetails:
       type: object
       properties:
