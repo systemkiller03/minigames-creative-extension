@@ -1,10 +1,11 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useFavourite } from '@/features/favourites/useFavourite';
 import { getGameDetails, type Game, type GameDetails } from '@/shared/api/games.api';
 import { ApiError } from '@/shared/api/client';
 import { Icon } from '@/shared/components/Icon';
+import { Modal } from '@/shared/components/Modal';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { LoadingState } from '@/shared/components/LoadingState';
 import { useSnackbar } from '@/shared/snackbar/SnackbarProvider';
@@ -12,8 +13,6 @@ import { formatCount, formatRelativeTime } from '@/shared/utils/format';
 import { getGameHeroImage } from '@/shared/utils/game-images';
 
 const MEDALS = ['🥇', '🥈', '🥉'] as const;
-
-const FOCUSABLE = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function Specs({ specs }: { specs: NonNullable<GameDetails['specs']> }) {
     const items = [
@@ -201,84 +200,34 @@ function DialogBody({ slug, fallbackDescription }: { slug: string; fallbackDescr
 export function GameDetailDialog({ slug }: { slug: string }) {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const panelRef = useRef<HTMLDivElement>(null);
     const closeRef = useRef<HTMLButtonElement>(null);
 
     const close = (): void => {
         void navigate({ to: '.', search: (previous) => ({ ...previous, game: undefined }) });
     };
 
-    useEffect(() => {
-        const previouslyFocused = document.activeElement;
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        closeRef.current?.focus();
-
-        return () => {
-            document.body.style.overflow = previousOverflow;
-            if (previouslyFocused instanceof HTMLElement) {
-                previouslyFocused.focus();
-            }
-        };
-    }, []);
-
     const fallbackDescription = queryClient
         .getQueriesData<{ games?: Game[] } | Game[]>({ queryKey: ['games'] })
         .flatMap(([, data]) => (Array.isArray(data) ? data : (data?.games ?? [])))
         .find((game) => game.slug === slug)?.shortDescription;
 
-    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-        if (event.key === 'Escape') {
-            event.stopPropagation();
-            close();
-            return;
-        }
-        if (event.key !== 'Tab' || !panelRef.current) {
-            return;
-        }
-        const items = [...panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)];
-        const first = items[0];
-        const last = items[items.length - 1];
-        if (!first || !last) {
-            return;
-        }
-        if (event.shiftKey && document.activeElement === first) {
-            event.preventDefault();
-            last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-            event.preventDefault();
-            first.focus();
-        }
-    };
-
     return (
-        <div
-            className="fixed inset-0 z-50 flex overflow-y-auto bg-on-primary/60 p-size-2 above-mobile:p-size-3"
-            onKeyDown={onKeyDown}
-            onMouseDown={(event) => {
-                if (event.target === event.currentTarget) {
-                    close();
-                }
-            }}
+        <Modal
+            className="max-w-[600px] overflow-hidden rounded-extra-large border border-solid border-outline-variant bg-bg shadow-[8px_8px_0_#111]"
+            initialFocusRef={closeRef}
+            labelledBy="game-dialog-title"
+            onClose={close}
         >
-            <div
-                aria-labelledby="game-dialog-title"
-                aria-modal="true"
-                className="relative m-auto w-full max-w-[600px] overflow-hidden rounded-extra-large border border-solid border-outline-variant bg-bg shadow-[8px_8px_0_#111]"
-                ref={panelRef}
-                role="dialog"
+            <DialogBody {...(fallbackDescription ? { fallbackDescription } : {})} slug={slug} />
+            <button
+                aria-label="Close"
+                className="absolute right-size-2 top-size-2 flex size-size-4 cursor-pointer items-center justify-center rounded-full border-2 border-solid border-on-primary bg-white text-on-primary drop-shadow-[2px_2px_0_#111] focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring above-mobile:size-10"
+                onClick={close}
+                ref={closeRef}
+                type="button"
             >
-                <DialogBody {...(fallbackDescription ? { fallbackDescription } : {})} slug={slug} />
-                <button
-                    aria-label="Close"
-                    className="absolute right-size-2 top-size-2 flex size-size-4 cursor-pointer items-center justify-center rounded-full border-2 border-solid border-on-primary bg-white text-on-primary drop-shadow-[2px_2px_0_#111] focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring above-mobile:size-10"
-                    onClick={close}
-                    ref={closeRef}
-                    type="button"
-                >
-                    <Icon className="text-[20px]" name="close" />
-                </button>
-            </div>
-        </div>
+                <Icon className="text-[20px]" name="close" />
+            </button>
+        </Modal>
     );
 }

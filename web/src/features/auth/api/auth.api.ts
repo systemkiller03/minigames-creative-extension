@@ -115,3 +115,25 @@ export async function revokeSession(sessionId: string): Promise<void> {
 export async function revokeOtherSessions(): Promise<void> {
   await apiRequest<void>('/me/sessions', { method: 'DELETE' });
 }
+
+export async function verifyPasswordReset(body: { email: string; code: string }): Promise<string> {
+  const response = await apiRequest<unknown>('/auth/password-reset/verify', {
+    method: 'POST',
+    body,
+    anonymous: true,
+  });
+  return z.object({ resetToken: z.string().min(1) }).parse(response).resetToken;
+}
+
+export async function confirmPasswordReset(body: {
+  email: string;
+  resetToken: string;
+  newPassword: string;
+}): Promise<string> {
+  const response = await apiRequest<unknown>('/auth/password-reset/confirm', {
+    method: 'POST',
+    body,
+    anonymous: true,
+  });
+  return messageSchema.parse(response).message;
+}

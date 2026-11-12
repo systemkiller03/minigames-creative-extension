@@ -2,7 +2,6 @@ import { useEffect, useRef, useState, type MouseEvent, type PointerEvent } from 
 import { Link } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { getFeaturedGames } from '../api/home.api';
-import type { FeaturedGame } from '../api/home.api';
 import { Button } from '@/shared/components/Button';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { ErrorState } from '@/shared/components/ErrorState';

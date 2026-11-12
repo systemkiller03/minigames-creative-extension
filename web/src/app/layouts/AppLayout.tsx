@@ -1,8 +1,13 @@
-import { Outlet } from '@tanstack/react-router';
+import { Outlet, useSearch } from '@tanstack/react-router';
+import { AuthDialog } from '@/features/auth/components/AuthDialog';
+import { useGoogleReturn } from '@/features/auth/useGoogleReturn';
 import { SiteFooter } from '@/features/footer/components/SiteFooter';
 import { SiteHeader } from '@/features/header/components/SiteHeader';
 
 export function AppLayout() {
+    const { auth } = useSearch({ strict: false });
+    useGoogleReturn();
+
     return (
         <div className="flex min-h-screen flex-col bg-bg font-inter text-on-bg">
             <a
@@ -16,6 +21,7 @@ export function AppLayout() {
                 <Outlet />
             </main>
             <SiteFooter />
+            {auth ? <AuthDialog mode={auth} /> : null}
         </div>
     );
 }

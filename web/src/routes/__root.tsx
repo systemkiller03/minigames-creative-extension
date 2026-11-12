@@ -14,6 +14,8 @@ const appSearchSchema = z.object({
     page: z.coerce.number().int().positive().catch(1).optional(),
     game: z.string().trim().min(1).optional(),
     auth: z.enum(['login', 'register']).optional(),
+    provider: z.string().optional(),
+    status: z.string().optional(),
 });
 
 export const Route = createRootRoute({
@@ -36,7 +38,7 @@ export const Route = createRootRoute({
         }
 
         const preservedSearch = { ...search };
-    delete preservedSearch.route;
+        delete preservedSearch.route;
         throw redirect({
             to: target,
             search: preservedSearch,
