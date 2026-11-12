@@ -50,6 +50,10 @@ services:
       context: ..
       dockerfile: api/Dockerfile
     restart: unless-stopped
+    # Written at boot only when Google sign-in is configured (all four values or none).
+    env_file:
+      - path: google.env
+        required: false
     environment:
       NODE_ENV: production
       PORT: '3000'

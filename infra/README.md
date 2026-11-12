@@ -37,8 +37,15 @@ should list only terminated instances.
 
 ## Limits
 
-- Google sign-in is not configured here: its redirect URI must be fixed, and the address changes
-  on every deploy. Email and password sign-up works through Mailpit.
+- Google sign-in needs a hostname that never changes, because Google only accepts redirect URIs
+  registered in advance. Before the demo, own a domain, set `domain` and `hosted_zone_id`, and add
+  `https://<domain>/api/auth/google/callback` to the OAuth client in Google Cloud once (it is also
+  printed as the `google_redirect_uri` output). Then pass the credentials on each apply:
+  `TF_VAR_google_client_id=... TF_VAR_google_client_secret=... terraform apply`. Without them,
+  Google sign-in stays off and email sign-up works through Mailpit. With the `sslip.io` fallback the
+  address changes on every deploy, so Google sign-in cannot work there.
+- The Google secret is written into the instance's user data and the local Terraform state, so
+  treat `terraform.tfstate` as secret and use a client dedicated to the demo.
 - Data lives on the instance and is lost with it. State is local (`terraform.tfstate`, ignored by
   git); keep it until you have destroyed.
 - The site address uses a public certificate authority. `sslip.io` certificates can occasionally

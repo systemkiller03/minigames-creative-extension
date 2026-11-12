@@ -24,3 +24,8 @@ output "boot_log_command" {
   description = "Shows what the instance has done so far (readable a minute or two after boot)."
   value       = "aws ec2 get-console-output --region ${var.region} --instance-id ${aws_instance.demo.id} --latest --output text"
 }
+
+output "google_redirect_uri" {
+  description = "Add this as an authorized redirect URI to the Google OAuth client before the demo (empty when Google sign-in is off)."
+  value       = var.google_client_id == "" ? "" : "https://${local.host}/api/auth/google/callback"
+}

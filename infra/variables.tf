@@ -54,3 +54,21 @@ variable "upstream_base_url" {
   type    = string
   default = "https://faxb76kxra.execute-api.eu-central-1.amazonaws.com"
 }
+
+variable "google_client_id" {
+  description = "Google OAuth client ID. Leave empty to turn Google sign-in off."
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth client secret. Pass it as TF_VAR_google_client_secret so it never lands in a file."
+  type        = string
+  default     = ""
+  sensitive   = true
+
+  validation {
+    condition     = (var.google_client_id == "") == (var.google_client_secret == "")
+    error_message = "Set google_client_id and google_client_secret together, or neither."
+  }
+}

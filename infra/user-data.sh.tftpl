@@ -31,6 +31,17 @@ MAILPIT_PASSWORD=${mailpit_password}
 ENV
 chmod 600 .env
 
+%{ if google_client_id != "" ~}
+# Google sign-in: the redirect URI is derived from this boot's hostname; register it in Google.
+cat > google.env <<GOOGLE
+GOOGLE_CLIENT_ID=${google_client_id}
+GOOGLE_CLIENT_SECRET=${google_secret}
+GOOGLE_REDIRECT_URI=https://$HOST/api/auth/google/callback
+FRONTEND_AUTH_REDIRECT_URL=https://$HOST/
+GOOGLE
+chmod 600 google.env
+%{ endif ~}
+
 docker compose up -d --build
 docker compose ps
 echo "DEMO READY: https://$HOST"

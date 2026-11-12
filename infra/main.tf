@@ -139,6 +139,8 @@ resource "aws_instance" "demo" {
     lifetime          = var.max_lifetime_minutes
     upstream_base_url = var.upstream_base_url
     mailpit_password  = random_password.mailpit.result
+    google_client_id  = var.google_client_id
+    google_secret     = var.google_client_secret
   })
 
   tags = { Name = var.name }
