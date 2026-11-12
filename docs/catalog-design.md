@@ -1,6 +1,6 @@
 # Catalog proxy and favourites design
 
-Status: design agreed, not implemented. Contract: `docs/base_api_endpoints.json`.
+Status: implemented and verified against the real upstream. Contract: `docs/base_api_endpoints.json`.
 Change the design here first, then the code.
 
 ## Upstream facts that drive the design
@@ -20,7 +20,7 @@ Change the design here first, then the code.
 | C3  | Idempotent API: `PUT /me/favourites/:slug` and `DELETE /me/favourites/:slug`. The gateway compares local state with the request and calls the upstream toggle only when the state must change.                                                             | A retry or double click must not flip the state back.                                                                                            |
 | C4  | Redis cache `cache:up:{sha256(method+path+sorted query)}` for categories (long TTL), leaderboard, featured, game lists and game details (about 60 s). Cached responses never contain per-user data. `isLikedByCurrentUser` is filled from the local table. | One entry serves everyone.                                                                                                                       |
 | C5  | Upstream client: timeout, one retry for GET only, never retry a toggle. Upstream 429 becomes our 503 with a retry hint. On upstream failure serve stale cache when present, otherwise 502. Unknown slug is always normalised to 404.                       | Upstream errors are inconsistent and rate limited.                                                                                               |
-| C6  | Comments and comment likes are a later slice. They reuse the client, error mapping, cache and email mapping. Comment-like state needs no local table (upstream reports it for the synthetic email); `authorName` comes from `user.name`.                   | Separate concerns (sanitising, spam, limits).                                                                                                    |
+| C6  | Implemented. Comments and comment likes reuse the client, error mapping, cache and email mapping. Comment-like state needs no local table (upstream reports it for the synthetic email); `authorName` comes from `user.name`.                              | Separate concerns (sanitising, spam, limits).                                                                                                    |
 
 ## Failure ordering for a favourite change
 
@@ -34,10 +34,18 @@ Change the design here first, then the code.
 Before the user row is deleted, un-favourite each of their favourites upstream
 (best effort, logged on failure). Local rows go with the user through the cascade.
 
+## Verified against the real upstream (2026-11-12)
+
+- **F1 resolved:** the upstream accepts `u-{uuid}@minigames-gateway.invalid` for the favourite
+  toggle. Toggling twice returned the game to its original `likesCount`.
+- **F2 measured:** 60 sequential requests in about 7 s (roughly 8 per second) from one IP
+  produced no 429, and no rate-limit headers are sent. The limit is higher than we need, so the
+  current TTLs stand. Our own per-user limits stay as abuse protection.
+- Real shapes match the client: game summaries carry `cardImage`, list `meta` carries
+  `totalPages`, and an unknown slug answers 404 `{error: "Game not found: ..."}`.
+- Not exercised: posting comments (cannot be undone on the shared service).
+
 ## Open items
 
-- **F1:** confirm the upstream accepts a `.invalid` address. If not, change
-  `UPSTREAM_EMAIL_DOMAIN` only.
-- **F2:** upstream rate limit values are unknown. Measure and tune the cache TTLs.
 - **F3:** `likesCount` can drift if someone toggles directly upstream with the same
   synthetic email. Accepted.

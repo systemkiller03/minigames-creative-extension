@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { getAuthContext, rateLimit, requireAuth, validateMiddleware } from '@/middlewares';
 import { changePasswordSchema, updateProfileSchema } from '@/schemas/me.schema';
+import { gameParamsSchema } from '@/schemas/catalog.schema';
 import { sessionParamsSchema } from '@/schemas/session.schema';
 import { sessionsRepository } from '@/repositories/sessions.repository';
+import { favouritesService } from '@/services/favourites.service';
 import { meService } from '@/services/me.service';
 import { IDLE_TTL_SECONDS } from '@/services/token.service';
 import { authCookiePathFrom, clearRefreshCookie } from '@/utils/auth-cookies';
@@ -68,3 +70,23 @@ meRouter.delete(
     res.sendStatus(204);
   },
 );
+
+meRouter.get('/favourites', async (req, res) => {
+  res.json(await favouritesService.list(getAuthContext(req).userId));
+});
+
+for (const [method, desired] of [
+  ['put', true],
+  ['delete', false],
+] as const) {
+  meRouter[method](
+    '/favourites/:slug',
+    rateLimit('favourite', 30),
+    validateMiddleware({ params: gameParamsSchema }),
+    async (req, res) => {
+      const { slug } = gameParamsSchema.parse(req.params);
+      const data = await favouritesService.setFavourite(getAuthContext(req).userId, slug, desired);
+      res.json({ data });
+    },
+  );
+}

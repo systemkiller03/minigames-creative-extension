@@ -9,6 +9,12 @@ const schema = z
     DATABASE_URL: z.string().min(1),
     REDIS_URL: z.string().min(1),
     UPSTREAM_BASE_URL: z.string().min(1),
+    UPSTREAM_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
+    /** Domain of the synthetic per-user email sent upstream (never a real mailbox). */
+    UPSTREAM_EMAIL_DOMAIN: z
+      .string()
+      .regex(/^[a-z0-9.-]+$/i)
+      .default('minigames-gateway.invalid'),
     JWT_ACCESS_SECRET: z.string().min(32),
     JWT_REFRESH_SECRET: z.string().min(32),
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),

@@ -25,3 +25,9 @@ vi.mock('@/services/email.service', () => ({
     },
   },
 }));
+
+// The real upstream is never called from tests; see test/fake-upstream.ts.
+vi.mock('@/services/upstream.client', async () => {
+  const { fakeUpstream } = await import('./fake-upstream');
+  return { upstream: fakeUpstream };
+});
