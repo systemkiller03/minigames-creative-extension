@@ -1,17 +1,12 @@
 import { ConflictException } from '@/errors/http-exceptions';
 import { pool } from '@/providers/db';
-import type { User } from '@/repositories/users.repository';
+import { USER_COLUMNS, type User } from '@/repositories/users.repository';
 
 export type GoogleProfile = {
   subject: string;
   email: string;
   name: string;
 };
-
-const USER_COLUMNS = `
-  id, email, name, password_hash AS "passwordHash",
-  created_at AS "createdAt"
-`;
 
 export class AuthIdentitiesRepository {
   async findOrCreateGoogleUser(profile: GoogleProfile): Promise<User> {
@@ -39,9 +34,14 @@ export class AuthIdentitiesRepository {
       }
 
       const { rows: userRows } = await client.query<User>(
-        `INSERT INTO users (email, name, password_hash)
-         VALUES ($1, $2, NULL)
-         ON CONFLICT (email) DO UPDATE SET email = users.email
+        // Google proved ownership of this email. If it matches a password account that was
+        // never verified, that password may belong to an impostor, so it is removed.
+        `INSERT INTO users (email, name, password_hash, email_verified_at)
+         VALUES ($1, $2, NULL, now())
+         ON CONFLICT (email) DO UPDATE SET
+           password_hash = CASE WHEN users.email_verified_at IS NULL
+                                THEN NULL ELSE users.password_hash END,
+           email_verified_at = COALESCE(users.email_verified_at, now())
          RETURNING ${USER_COLUMNS}`,
         [profile.email, profile.name],
       );

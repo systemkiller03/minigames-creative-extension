@@ -2,16 +2,10 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import type { RequestHandler } from 'express';
 import { env } from '@/config/env';
 import { ForbiddenException, UnauthorizedException } from '@/errors/http-exceptions';
-import { sessionsRepository } from '@/repositories/sessions.repository';
+import { tokenService } from '@/services/token.service';
 
 export function hashToken(token: string) {
   return createHash('sha256').update(token).digest('hex');
-}
-
-export function tokensMatch(left: string, right: string) {
-  const leftHash = createHash('sha256').update(left).digest();
-  const rightHash = createHash('sha256').update(right).digest();
-  return timingSafeEqual(leftHash, rightHash);
 }
 
 export function tokenMatchesHash(token: string, expectedHash: string) {
@@ -20,46 +14,36 @@ export function tokenMatchesHash(token: string, expectedHash: string) {
   return timingSafeEqual(createHash('sha256').update(token).digest(), expected);
 }
 
-export const requireAuth: RequestHandler = async (req, _res, next) => {
-  const authorization = req.get('Authorization');
-  const match = authorization?.match(/^Bearer ([A-Za-z0-9_-]+)$/);
-  const token = match?.[1];
+function readBearerToken(authorization: string | undefined) {
+  return authorization?.match(/^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/)?.[1];
+}
+
+/** Verifies the access JWT by signature and expiry only; nothing is looked up. */
+export const requireAuth: RequestHandler = (req, _res, next) => {
+  const token = readBearerToken(req.get('Authorization'));
   if (!token) {
     next(new UnauthorizedException());
     return;
   }
 
-  const session = await sessionsRepository.findByAccessHash(hashToken(token));
-  if (!session) {
-    next(new UnauthorizedException('Invalid or expired access token'));
-    return;
-  }
-
-  req.auth = { sessionId: session.id, userId: session.userId };
+  req.auth = tokenService.verifyAccessToken(token);
   next();
 };
 
-export const optionalAuth: RequestHandler = async (req, _res, next) => {
+export const optionalAuth: RequestHandler = (req, _res, next) => {
   const authorization = req.get('Authorization');
   if (!authorization) {
     next();
     return;
   }
 
-  const match = authorization.match(/^Bearer ([A-Za-z0-9_-]+)$/);
-  const token = match?.[1];
+  const token = readBearerToken(authorization);
   if (!token) {
     next(new UnauthorizedException('Invalid or expired access token'));
     return;
   }
 
-  const session = await sessionsRepository.findByAccessHash(hashToken(token));
-  if (!session) {
-    next(new UnauthorizedException('Invalid or expired access token'));
-    return;
-  }
-
-  req.auth = { sessionId: session.id, userId: session.userId };
+  req.auth = tokenService.verifyAccessToken(token);
   next();
 };
 

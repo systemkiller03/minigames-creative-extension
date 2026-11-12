@@ -9,7 +9,9 @@
     "start": "node --env-file=.env dist/server.js",
     "migrate:create": "node-pg-migrate create -m migrations --migration-file-language sql",
     "migrate:up": "dotenv -e .env -- node-pg-migrate up -m migrations",
-    "migrate:down": "dotenv -e .env -- node-pg-migrate down -m migrations"
+    "migrate:down": "dotenv -e .env -- node-pg-migrate down -m migrations",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
@@ -29,18 +31,26 @@
     "google-auth-library": "^11.3.4",
     "helmet": "^8.3.0",
     "ioredis": "^6.0.0",
+    "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^10.4.0",
     "pg": "^8.23.1",
+    "ua-parser-js": "^2.0.10",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.6",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
     "dotenv-cli": "^11.1.0",
     "node-pg-migrate": "^9.0.0",
+    "supertest": "^7.3.2",
     "tsup": "^9.0.0",
     "tsx": "^4.23.15",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0"
   }
 }

@@ -1,9 +1,9 @@
-import type { AuthContext } from '@/repositories/sessions.repository';
+import type { AccessClaims } from '@/services/token.service';
 
 declare global {
   namespace Express {
     interface Request {
-      auth?: AuthContext;
+      auth?: AccessClaims;
     }
   }
 }

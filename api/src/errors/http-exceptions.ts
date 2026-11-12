@@ -18,6 +18,12 @@ export class ForbiddenException extends BaseError {
   }
 }
 
+export class EmailNotVerifiedException extends BaseError {
+  constructor(message = 'Email address is not verified') {
+    super(403, ErrorCode.EMAIL_NOT_VERIFIED, message);
+  }
+}
+
 export class NotFoundException extends BaseError {
   constructor(message = 'Not found') {
     super(404, ErrorCode.NOT_FOUND, message);

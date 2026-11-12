@@ -9,10 +9,17 @@ const schema = z
     DATABASE_URL: z.string().min(1),
     REDIS_URL: z.string().min(1),
     UPSTREAM_BASE_URL: z.string().min(1),
+    JWT_ACCESS_SECRET: z.string().min(32),
+    JWT_REFRESH_SECRET: z.string().min(32),
     GOOGLE_CLIENT_ID: z.string().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
     GOOGLE_REDIRECT_URI: httpUrl.optional(),
     FRONTEND_AUTH_REDIRECT_URL: httpUrl.optional(),
+    SMTP_HOST: z.string().min(1).default('127.0.0.1'),
+    SMTP_PORT: z.coerce.number().int().positive().default(1025),
+    SMTP_FROM: z.string().min(1).default('no-reply@minigames.local'),
+    SMTP_USER: z.string().min(1).optional(),
+    SMTP_PASSWORD: z.string().min(1).optional(),
     CORS_ORIGINS: z
       .string()
       .min(1)
@@ -33,6 +40,14 @@ const schema = z
       ),
   })
   .superRefine((value, context) => {
+    if (value.JWT_ACCESS_SECRET === value.JWT_REFRESH_SECRET) {
+      context.addIssue({
+        code: 'custom',
+        path: ['JWT_REFRESH_SECRET'],
+        message: 'JWT_REFRESH_SECRET must differ from JWT_ACCESS_SECRET',
+      });
+    }
+
     const googleOAuthValues = [
       value.GOOGLE_CLIENT_ID,
       value.GOOGLE_CLIENT_SECRET,
@@ -47,6 +62,14 @@ const schema = z
         path: ['GOOGLE_CLIENT_ID'],
         message:
           'Configure GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI, and FRONTEND_AUTH_REDIRECT_URL together',
+      });
+    }
+
+    if (Boolean(value.SMTP_USER) !== Boolean(value.SMTP_PASSWORD)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['SMTP_USER'],
+        message: 'Configure SMTP_USER and SMTP_PASSWORD together',
       });
     }
   });

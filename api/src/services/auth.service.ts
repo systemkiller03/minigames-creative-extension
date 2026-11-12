@@ -1,19 +1,26 @@
 import argon2 from 'argon2';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { usersRepository, type User } from '@/repositories/users.repository';
-import { ConflictException, UnauthorizedException } from '@/errors/http-exceptions';
-import { hashToken, tokenMatchesHash, tokensMatch } from '@/middlewares/auth.middleware';
+import { EmailNotVerifiedException, UnauthorizedException } from '@/errors/http-exceptions';
 import type { RegisterBody } from '@/schemas/register.schema';
 import type { LoginBody } from '@/schemas/login.schema';
-import { sessionsRepository } from '@/repositories/sessions.repository';
+import { RotateResult, sessionsRepository } from '@/repositories/sessions.repository';
 import {
   authIdentitiesRepository,
   type GoogleProfile,
 } from '@/repositories/auth-identities.repository';
+import { emailVerificationService } from '@/services/email-verification.service';
+import {
+  ACCESS_TTL_SECONDS,
+  IDLE_TTL_SECONDS,
+  MAX_FAMILY_TTL_SECONDS,
+  tokenService,
+} from '@/services/token.service';
 
-const ACCESS_TTL_SECONDS = 15 * 60;
-const IDLE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const MAX_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const IDLE_TTL_MS = IDLE_TTL_SECONDS * 1000;
+const MAX_FAMILY_TTL_MS = MAX_FAMILY_TTL_SECONDS * 1000;
+/** A just-rotated refresh token is still accepted for this long (two tabs refreshing at once). */
+const REFRESH_GRACE_MS = 20 * 1000;
 let dummyPasswordHash: Promise<string> | undefined;
 
 type SessionMetadata = {
@@ -21,11 +28,15 @@ type SessionMetadata = {
   ipAddress: string;
 };
 
-function createToken() {
-  return randomBytes(32).toString('base64url');
+function createJti() {
+  return randomBytes(24).toString('base64url');
 }
 
 export class AuthService {
+  /**
+   * Always resolves the same way, whether or not the email is already registered, so the
+   * response cannot be used to discover which emails have accounts.
+   */
   async register(input: RegisterBody) {
     const passwordHash = await argon2.hash(input.password);
     const user = await usersRepository.insert({
@@ -33,8 +44,7 @@ export class AuthService {
       name: input.name,
       passwordHash,
     });
-    if (!user) throw new ConflictException('Email is already registered');
-    return this.toPublicUser(user);
+    if (user) void emailVerificationService.issueCode(user.id, user.email);
   }
 
   async login(input: LoginBody, metadata: SessionMetadata) {
@@ -47,6 +57,8 @@ export class AuthService {
     if (!(await argon2.verify(passwordHash, input.password)) || !user?.passwordHash) {
       throw new UnauthorizedException('Invalid email or password');
     }
+    // Checked only after the password is proven, so this does not reveal which emails exist.
+    if (!user.emailVerifiedAt) throw new EmailNotVerifiedException();
 
     return this.createSession(user, metadata);
   }
@@ -56,112 +68,90 @@ export class AuthService {
     return this.createSession(user, metadata);
   }
 
-  async refresh(
-    refreshToken: string | undefined,
-    csrfCookie: string | undefined,
-    csrfHeader: string | undefined,
-    metadata: SessionMetadata,
-  ) {
-    if (!refreshToken || !csrfCookie || !csrfHeader || !tokensMatch(csrfCookie, csrfHeader)) {
-      throw new UnauthorizedException('Invalid refresh credentials');
-    }
-
-    const presentedRefreshHash = hashToken(refreshToken);
-    const session = await sessionsRepository.findByRefreshHash(presentedRefreshHash);
-    if (!session) {
-      throw new UnauthorizedException('Invalid refresh credentials');
-    }
-    const expectedCsrfHash = await sessionsRepository.findCsrfHash(
-      session.id,
-      presentedRefreshHash,
-    );
-    if (!expectedCsrfHash || !tokenMatchesHash(csrfCookie, expectedCsrfHash)) {
-      throw new UnauthorizedException('Invalid refresh credentials');
-    }
+  async refresh(refreshToken: string | undefined, metadata: SessionMetadata) {
+    if (!refreshToken) throw new UnauthorizedException('Invalid refresh credentials');
+    const claims = tokenService.verifyRefreshToken(refreshToken);
 
     const now = Date.now();
-    const accessToken = createToken();
-    const nextRefreshToken = createToken();
-    const csrfToken = createToken();
-    const result = await sessionsRepository.rotate({
-      session,
-      presentedRefreshHash,
+    const newJti = createJti();
+    const rotation = await sessionsRepository.rotate({
+      id: claims.sessionId,
+      userId: claims.userId,
+      presentedJti: claims.jti,
+      newJti,
       now,
-      idleExpiresAt: Math.min(now + IDLE_TTL_MS, session.maxExpiresAt),
-      refreshHash: hashToken(nextRefreshToken),
-      accessHash: hashToken(accessToken),
-      csrfHash: hashToken(csrfToken),
-      accessTtlSeconds: ACCESS_TTL_SECONDS,
+      graceMs: REFRESH_GRACE_MS,
+      idleMs: IDLE_TTL_MS,
       userAgent: metadata.userAgent.slice(0, 512),
       ipAddress: metadata.ipAddress,
     });
-
-    if (result !== 1) {
+    if (rotation.result !== RotateResult.Rotated) {
       throw new UnauthorizedException(
-        result === -1
+        rotation.result === RotateResult.Reuse
           ? 'Refresh token reuse detected; sign in again'
           : 'Invalid refresh credentials',
       );
     }
 
-    const user = await usersRepository.findById(session.userId);
+    const user = await usersRepository.findById(claims.userId);
     if (!user) {
-      await sessionsRepository.revoke(session.id, session.userId);
+      await sessionsRepository.revoke(claims.sessionId, claims.userId);
       throw new UnauthorizedException('Account no longer exists');
     }
     return {
       user: this.toPublicUser(user),
-      accessToken,
-      expiresIn: ACCESS_TTL_SECONDS,
-      refreshToken: nextRefreshToken,
-      csrfToken,
-      refreshExpiresIn: Math.max(0, session.maxExpiresAt - now),
+      ...this.issueTokens(user.id, claims.sessionId, {
+        jti: newJti,
+        expiresAt: rotation.expiresAt,
+        now,
+      }),
     };
   }
 
-  async issueCsrfToken(refreshToken: string | undefined) {
-    if (!refreshToken) throw new UnauthorizedException('Invalid refresh credentials');
-    const refreshHash = hashToken(refreshToken);
-    const session = await sessionsRepository.findByRefreshHash(refreshHash);
-    if (!session || session.currentRefreshHash !== refreshHash) {
-      throw new UnauthorizedException('Invalid refresh credentials');
-    }
-
-    const csrfToken = createToken();
-    const updated = await sessionsRepository.updateCsrf(session, hashToken(csrfToken));
-    if (!updated) throw new UnauthorizedException('Invalid refresh credentials');
-    return {
-      csrfToken,
-      refreshExpiresIn: Math.max(0, session.maxExpiresAt - Date.now()),
-    };
+  async logout(userId: string, sessionId: string) {
+    await sessionsRepository.revoke(sessionId, userId);
   }
 
   private async createSession(user: User, metadata: SessionMetadata) {
     const now = Date.now();
-    const maxExpiresAt = now + MAX_SESSION_TTL_MS;
-    const refreshToken = createToken();
-    const accessToken = createToken();
-    const csrfToken = createToken();
+    const sessionId = randomUUID();
+    const jti = createJti();
+    const maxExpiresAt = now + MAX_FAMILY_TTL_MS;
     await sessionsRepository.create({
-      id: randomUUID(),
+      id: sessionId,
       userId: user.id,
+      jti,
       now,
-      idleExpiresAt: Math.min(now + IDLE_TTL_MS, maxExpiresAt),
       maxExpiresAt,
+      idleMs: IDLE_TTL_MS,
       userAgent: metadata.userAgent.slice(0, 512),
       ipAddress: metadata.ipAddress,
-      refreshHash: hashToken(refreshToken),
-      accessHash: hashToken(accessToken),
-      csrfHash: hashToken(csrfToken),
-      accessTtlSeconds: ACCESS_TTL_SECONDS,
     });
     return {
       user: this.toPublicUser(user),
-      accessToken,
+      ...this.issueTokens(user.id, sessionId, {
+        jti,
+        expiresAt: Math.min(now + IDLE_TTL_MS, maxExpiresAt),
+        now,
+      }),
+    };
+  }
+
+  private issueTokens(
+    userId: string,
+    sessionId: string,
+    refresh: { jti: string; expiresAt: number; now: number },
+  ) {
+    return {
+      accessToken: tokenService.signAccessToken({ userId, sessionId }),
       expiresIn: ACCESS_TTL_SECONDS,
-      refreshToken,
-      csrfToken,
-      refreshExpiresIn: MAX_SESSION_TTL_MS,
+      refreshToken: tokenService.signRefreshToken({
+        userId,
+        sessionId,
+        jti: refresh.jti,
+        expiresAt: Math.floor(refresh.expiresAt / 1000),
+      }),
+      refreshExpiresIn: Math.max(0, refresh.expiresAt - refresh.now),
     };
   }
 
