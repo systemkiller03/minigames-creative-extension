@@ -8,7 +8,6 @@ import { SectionHeading } from './SectionHeading';
 const AVATAR_COLORS = [
     'bg-avatar-random-2',
     'bg-avatar-random-4',
-    'bg-avatar-random-6',
     'bg-avatar-random-3',
     'bg-avatar-random-1',
     'bg-avatar-random-5',

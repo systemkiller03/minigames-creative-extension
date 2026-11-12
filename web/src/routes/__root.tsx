@@ -35,7 +35,8 @@ export const Route = createRootRoute({
             throw notFound();
         }
 
-        const { route: _route, ...preservedSearch } = search;
+        const preservedSearch = { ...search };
+    delete preservedSearch.route;
         throw redirect({
             to: target,
             search: preservedSearch,

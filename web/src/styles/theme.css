@@ -1,199 +1,203 @@
 @theme static {
-    --color-white: #ffffff;
-    --color-black: #000000;
-    --color-bg: #f9f8f3;
-    --color-on-bg: #5f5d75;
-    --color-on-bg-low: #737380;
-    --color-bg-footer: #1e1b3a;
-    --color-bg-footer-low: #2a264f;
-    --color-bg-footer-lowest: #3c376e;
-    --color-on-bg-footer: #b9b5c9;
-    --color-surface: #fff9e5;
-    --color-surface-low: #fffcf5;
-    --color-surface-disabled: #f5f5f5;
-    --color-primary: #ffd02b;
-    --color-primary-low: #fde047;
-    --color-primary-high: #e5bb00;
-    --color-on-primary: #242145;
-    --color-secondary: #f0eeff;
-    --color-tertiary: #3a2ebf;
-    --color-like: #ff4b4b;
-    --color-error: #b3261e;
-    --color-price-free: #0b8a8f;
-    --color-outline: #e5e7eb;
-    --color-outline-variant: #d2d2d2;
-    --color-avatar-random-1: #dfeaff;
-    --color-avatar-random-2: #fbe7ad;
-    --color-avatar-random-3: #e8d8ff;
-    --color-avatar-random-4: #d8f5d6;
-    --color-avatar-random-5: #ffd9d2;
-    --color-avatar-random-6: #d5f1ff;
+  --color-white: #ffffff;
+  --color-black: #111111;
+  --color-bg: #f9f8f3;
+  --color-on-bg: #5f5d75;
+  --color-on-bg-low: #737380;
+  --color-bg-footer: #1e1b3a;
+  --color-bg-footer-low: #2a264f;
+  --color-bg-footer-lowest: #3c376e;
+  --color-on-bg-footer: #b9b5c9;
+  --color-surface: #fff9e5;
+  --color-surface-low: #fffcf5;
+  --color-surface-disabled: #f5f5f5;
+  --color-primary: #ffd02b;
+  --color-primary-low: #fde047;
+  --color-primary-high: #e5bb00;
+  --color-on-primary: #242145;
+  --color-secondary: #f0eeff;
+  --color-tertiary: #3a2ebf;
+  --color-like: #ff4b4b;
+  --color-error: #b3261e;
+  --color-price-free: #0b8a8f;
+  --color-outline: #e5e7eb;
+  --color-outline-variant: #d2d2d2;
+  --color-avatar-random-1: #e9eef6;
+  --color-avatar-random-2: #a3e2c9;
+  --color-avatar-random-3: #bce3ff;
+  --color-avatar-random-4: #ffc6ff;
+  --color-avatar-random-5: #e8dff5;
+  --color-text-placeholder: #969696;
 
-    --spacing-size-05: 4px;
-    --spacing-size-1: 8px;
-    --spacing-size-2: 16px;
-    --spacing-size-3: 24px;
-    --spacing-size-4: 32px;
-    --spacing-size-5: 40px;
-    --spacing-size-6: 48px;
-    --spacing-size-7: 56px;
-    --spacing-size-8: 64px;
-    --spacing-size-9: 72px;
-    --spacing-size-10: 80px;
-    --spacing-size-11: 88px;
-    --spacing-size-12: 96px;
-    --spacing-size-13: 104px;
-    --spacing-size-14: 112px;
-    --spacing-size-15: 120px;
-    --spacing-button-large-y: 16px;
-    --spacing-button-large-x: 24px;
-    --spacing-button-medium-y: 10px;
-    --spacing-button-medium-x: 20px;
-    --spacing-button-small-y: 8px;
-    --spacing-button-small-x: 16px;
-    --spacing-button-icon: 8px;
-    --spacing-button-gap: 8px;
-    --spacing-button-height-small: 33px;
-    --spacing-button-height-medium: 37px;
-    --spacing-button-height-large: 48px;
-    --spacing-button-icon-large: 12px;
-    --spacing-icon-small: 20px;
-    --spacing-icon-medium: 24px;
-    --spacing-icon-button-small: 32px;
-    --spacing-icon-button-medium: 40px;
-    --spacing-pagination: 40px;
-    --spacing-pagination-gap: 16px;
-    --spacing-chip-height: 33px;
-    --spacing-chip-height-mobile: 31px;
-    --spacing-touch-target-min: 44px;
-    --spacing-focus-ring-width: 2px;
-    --spacing-focus-ring-offset: 2px;
-    --spacing-dropdown-trigger-height-desktop: 44px;
-    --spacing-dropdown-trigger-height-compact: 40px;
-    --spacing-dropdown-trigger-padding-x-desktop: 20px;
-    --spacing-dropdown-trigger-width-desktop: 190px;
-    --spacing-dropdown-trigger-width-tablet: 182px;
-    --spacing-dropdown-menu-min-width: 200px;
-    --spacing-dropdown-item-height: 49px;
-    --spacing-dropdown-divider-height: 1px;
-    --spacing-home-hero-min-height: 331px;
-    --spacing-home-hero-min-height-tablet: 383px;
-    --spacing-home-hero-min-height-wide: 627px;
-    --spacing-home-hero-copy-narrow: 480px;
-    --spacing-home-hero-copy-wide: 640px;
-    --spacing-home-hero-title: 500px;
-    --spacing-home-section-y: 40px;
-    --spacing-home-section-y-compact: 32px;
-    --spacing-carousel-peek: 56px;
-    --spacing-carousel-side: 56px;
-    --spacing-carousel-featured: 218px;
-    --spacing-carousel-peek-mobile: clamp(32px, calc(12.5vw - 4px), 56px);
-    --spacing-carousel-featured-mobile: clamp(140px, calc(48.66vw - 15.56px), 218px);
-    --spacing-carousel-peek-tablet: clamp(56px, calc(6.8056vw + 23.33px), 105px);
-    --spacing-carousel-side-tablet: clamp(56px, calc(6.8056vw + 23.33px), 105px);
-    --spacing-carousel-featured-tablet: clamp(218px, calc(31.944vw + 64.67px), 448px);
-    --spacing-carousel-peek-wide: clamp(67px, calc(7.3529vw - 21.176px), 120px);
-    --spacing-carousel-side-wide: clamp(161px, calc(17.647vw - 50.824px), 288px);
-    --spacing-carousel-featured-wide: clamp(456px, calc(50vw - 144px), 816px);
-    --spacing-carousel-card-height: 200px;
-    --spacing-carousel-card-height-tablet: 280px;
-    --spacing-carousel-card-height-wide: 384px;
-    --spacing-section-heading-marker: 6px;
-    --spacing-developer-copy: 640px;
-    --border-width-hero-wide: 3px;
+  --spacing-size-05: 4px;
+  --spacing-size-1: 8px;
+  --spacing-size-2: 16px;
+  --spacing-size-3: 24px;
+  --spacing-size-4: 32px;
+  --spacing-size-5: 40px;
+  --spacing-size-6: 48px;
+  --spacing-size-7: 56px;
+  --spacing-size-8: 64px;
+  --spacing-size-9: 72px;
+  --spacing-size-10: 80px;
+  --spacing-size-11: 88px;
+  --spacing-size-12: 96px;
+  --spacing-size-13: 104px;
+  --spacing-size-14: 112px;
+  --spacing-size-15: 120px;
+  --spacing-button-large-y: 16px;
+  --spacing-button-large-x: 24px;
+  --spacing-button-medium-y: 10px;
+  --spacing-button-medium-x: 20px;
+  --spacing-button-small-y: 8px;
+  --spacing-button-small-x: 16px;
+  --spacing-button-icon: 8px;
+  --spacing-button-gap: 8px;
+  --spacing-button-height-small: 33px;
+  --spacing-button-height-medium: 37px;
+  --spacing-button-height-large: 48px;
+  --spacing-button-icon-large: 12px;
+  --spacing-icon-small: 20px;
+  --spacing-icon-medium: 24px;
+  --spacing-icon-button-small: 32px;
+  --spacing-icon-button-medium: 40px;
+  --spacing-pagination: 40px;
+  --spacing-pagination-gap: 16px;
+  --spacing-chip-height: 33px;
+  --spacing-chip-height-mobile: 31px;
+  --spacing-touch-target-min: 44px;
+  --spacing-focus-ring-width: 2px;
+  --spacing-focus-ring-offset: 2px;
+  --spacing-dropdown-trigger-height-desktop: 44px;
+  --spacing-dropdown-trigger-height-compact: 40px;
+  --spacing-dropdown-trigger-padding-x-desktop: 20px;
+  --spacing-dropdown-trigger-width-desktop: 190px;
+  --spacing-dropdown-trigger-width-tablet: 182px;
+  --spacing-dropdown-menu-min-width: 200px;
+  --spacing-dropdown-item-height: 49px;
+  --spacing-dropdown-divider-height: 1px;
+  --spacing-home-hero-min-height: 331px;
+  --spacing-home-hero-min-height-tablet: 383px;
+  --spacing-home-hero-min-height-wide: 627px;
+  --spacing-home-hero-copy-narrow: 480px;
+  --spacing-home-hero-copy-wide: 640px;
+  --spacing-home-hero-title: 500px;
+  --spacing-home-section-y: 40px;
+  --spacing-home-section-y-compact: 32px;
+  --spacing-carousel-peek: 56px;
+  --spacing-carousel-side: 56px;
+  --spacing-carousel-featured: 218px;
+  --spacing-carousel-peek-mobile: clamp(32px, calc(12.5vw - 4px), 56px);
+  --spacing-carousel-featured-mobile: clamp(140px, calc(48.66vw - 15.56px), 218px);
+  --spacing-carousel-peek-tablet: clamp(56px, calc(6.8056vw + 23.33px), 105px);
+  --spacing-carousel-side-tablet: clamp(56px, calc(6.8056vw + 23.33px), 105px);
+  --spacing-carousel-featured-tablet: clamp(218px, calc(31.944vw + 64.67px), 448px);
+  --spacing-carousel-peek-wide: clamp(67px, calc(7.3529vw - 21.176px), 120px);
+  --spacing-carousel-side-wide: clamp(161px, calc(17.647vw - 50.824px), 288px);
+  --spacing-carousel-featured-wide: clamp(456px, calc(50vw - 144px), 816px);
+  --spacing-carousel-card-height: 200px;
+  --spacing-carousel-card-height-tablet: 280px;
+  --spacing-carousel-card-height-wide: 384px;
+  --spacing-section-heading-marker: 6px;
+  --spacing-developer-copy: 640px;
+  --border-width-hero-wide: 3px;
 
-    --radius-extra-small: 4px;
-    --radius-small: 8px;
-    --radius-medium: 12px;
-    --radius-large: 16px;
-    --radius-extra-large: 24px;
-    --radius-full: 9999px;
+  --radius-extra-small: 4px;
+  --radius-small: 8px;
+  --radius-medium: 12px;
+  --radius-large: 16px;
+  --radius-extra-large: 24px;
+  --radius-full: 9999px;
 
-    --font-inter: 'Inter', sans-serif;
-    --font-roboto: 'Roboto', sans-serif;
-    --text-display-large: 56px;
-    --text-display-medium: 36px;
-    --text-display-small: 24px;
-    --text-headline-large: 32px;
-    --text-headline-medium: 24px;
-    --text-headline-small: 20px;
-    --text-body-large: 18px;
-    --text-body-medium: 16px;
-    --text-body-small: 14px;
-    --text-label-extra-large: 16px;
-    --text-label-large: 14px;
-    --text-label-medium: 12px;
-    --text-label-small: 10px;
-    --font-weight-regular: 400;
-    --font-weight-medium: 500;
-    --font-weight-bold: 700;
-    --font-weight-extra-bold: 800;
-    --leading-button: 1.2;
-    --ease-fast: ease;
-    --transition-duration-fast: 150ms;
-    --color-focus-ring: #3a2ebf;
-    --border-width-button: 2px;
-    --border-width-button-thin: 1px;
-    --border-width-button-hover: 1.5px;
-    --shadow-level-1: 4px 4px 0 #ffd02b;
-    --shadow-level-2: 6px 6px 0 #ffd02b;
-    --shadow-level-3: 8px 8px 0 #ffd02b;
-    --shadow-hard: 4px 4px 0 #000000;
-    --container-content: 1680px;
-    --container-featured: 1920px;
-    --transition-property-carousel-card: flex-basis, opacity;
+  --font-inter: 'Inter', sans-serif;
+  --font-roboto: 'Roboto', sans-serif;
+  --text-display-large: 56px;
+  --text-display-medium: 36px;
+  --text-display-small: 24px;
+  --text-headline-large: 32px;
+  --text-headline-medium: 24px;
+  --text-headline-small: 20px;
+  --text-title-xxx-small: 18px;
+  --text-title-xx-small: 16px;
+  --text-body-large: 18px;
+  --text-body-medium: 16px;
+  --text-body-small: 14px;
+  --text-label-extra-large: 16px;
+  --text-label-large: 14px;
+  --text-label-medium: 12px;
+  --text-label-small: 10px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+  --leading-button: 1.2;
+  --ease-fast: ease;
+  --transition-duration-fast: 150ms;
+  --color-focus-ring: #3a2ebf;
+  --border-width-button: 2px;
+  --border-width-button-thin: 1px;
+  --border-width-button-hover: 1.5px;
+  --shadow-level-1: 4px 4px 0 #ffd02b;
+  --shadow-level-2: 6px 6px 0 #ffd02b;
+  --shadow-level-3: 8px 8px 0 #ffd02b;
+  --shadow-hard: 4px 4px 0 #111111;
+  --container-content: 1680px;
+  --container-featured: 1920px;
+  --transition-property-carousel-card: flex-basis, opacity;
 
-    --breakpoint-mobile-max: 480px;
-    --breakpoint-tablet: 768px;
-    --breakpoint-desktop: 1200px;
+  --breakpoint-mobile-max: 480px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1200px;
 }
 
 @utility carousel-card-peek {
-    flex-basis: var(--spacing-carousel-peek);
+  flex-basis: var(--spacing-carousel-peek);
 }
 
 @utility carousel-card-side {
-    flex-basis: var(--spacing-carousel-side);
+  flex-basis: var(--spacing-carousel-side);
 }
 
 @utility carousel-card-side-tablet {
-    flex-basis: var(--spacing-carousel-side-tablet);
+  flex-basis: var(--spacing-carousel-side-tablet);
 }
 
 @utility carousel-card-featured {
-    flex-basis: var(--spacing-carousel-featured);
+  flex-basis: var(--spacing-carousel-featured);
 }
 
 @utility carousel-card-peek-mobile {
-    flex-basis: var(--spacing-carousel-peek-mobile);
+  flex-basis: var(--spacing-carousel-peek-mobile);
 }
 
 @utility carousel-card-featured-mobile {
-    flex-basis: var(--spacing-carousel-featured-mobile);
+  flex-basis: var(--spacing-carousel-featured-mobile);
 }
 
 @utility carousel-card-peek-tablet {
-    flex-basis: var(--spacing-carousel-peek-tablet);
+  flex-basis: var(--spacing-carousel-peek-tablet);
 }
 
 @utility carousel-card-featured-tablet {
-    flex-basis: var(--spacing-carousel-featured-tablet);
+  flex-basis: var(--spacing-carousel-featured-tablet);
 }
 
 @utility carousel-card-peek-wide {
-    flex-basis: var(--spacing-carousel-peek-wide);
+  flex-basis: var(--spacing-carousel-peek-wide);
 }
 
 @utility carousel-card-side-wide {
-    flex-basis: var(--spacing-carousel-side-wide);
+  flex-basis: var(--spacing-carousel-side-wide);
 }
 
 @utility carousel-card-featured-wide {
-    flex-basis: var(--spacing-carousel-featured-wide);
+  flex-basis: var(--spacing-carousel-featured-wide);
 }
 
 @custom-variant mobile (@media (max-width: theme(--breakpoint-mobile-max)));
 @custom-variant tablet (@media (max-width: theme(--breakpoint-tablet)));
 @custom-variant desktop (@media (max-width: theme(--breakpoint-desktop)));
+@custom-variant above-mobile (@media (min-width: 481px));
+@custom-variant above-tablet (@media (min-width: 769px));
 @custom-variant tablet-up (@media (min-width: theme(--breakpoint-tablet)));
 @custom-variant desktop-up (@media (min-width: theme(--breakpoint-desktop)));
