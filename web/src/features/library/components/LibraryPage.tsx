@@ -24,7 +24,6 @@ function CardSkeleton() {
                 <div className="h-12 rounded-small bg-outline" />
                 <div className="h-8 w-1/3 rounded-small bg-outline" />
             </div>
-            {search.game ? <GameDetailDialog key={search.game} slug={search.game} /> : null}
         </div>
     );
 }

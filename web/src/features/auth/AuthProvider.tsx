@@ -24,6 +24,10 @@ type AuthContextValue = {
     user: AuthUser | null;
     signIn: (credentials: { email: string; password: string }) => Promise<AuthUser>;
     signOut: () => Promise<void>;
+    /** Replace the cached user, e.g. after a profile edit. */
+    updateUser: (user: AuthUser) => void;
+    /** Drop the local session without calling the API (the server already ended it). */
+    clearSession: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -98,9 +102,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [queryClient]);
 
+    const clearSession = useCallback((): void => {
+        setAccessToken(null);
+        setUser(null);
+        setStatus('guest');
+        void queryClient.invalidateQueries();
+    }, [queryClient]);
+
     const value = useMemo(
-        () => ({ status, user, signIn, signOut }),
-        [status, user, signIn, signOut],
+        () => ({ status, user, signIn, signOut, updateUser: setUser, clearSession }),
+        [status, user, signIn, signOut, clearSession],
     );
 
     return <AuthContext value={value}>{children}</AuthContext>;

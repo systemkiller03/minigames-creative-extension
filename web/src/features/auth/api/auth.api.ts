@@ -137,3 +137,19 @@ export async function confirmPasswordReset(body: {
   });
   return messageSchema.parse(response).message;
 }
+
+export async function updateProfile(body: { name: string }): Promise<AuthUser> {
+  const response = await apiRequest<unknown>('/me', { method: 'PATCH', body });
+  return z.object({ user: userSchema }).parse(response).user;
+}
+
+export async function changePassword(body: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<void> {
+  await apiRequest<void>('/me/password', { method: 'POST', body });
+}
+
+export async function deleteAccount(body: { password?: string; confirm: true }): Promise<void> {
+  await apiRequest<void>('/auth/account', { method: 'DELETE', body });
+}

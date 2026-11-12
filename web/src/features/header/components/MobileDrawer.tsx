@@ -81,16 +81,32 @@ export function MobileDrawer({ open, isAuthenticated, onClose, onSignOut }: Mobi
 
                 <div className="mt-auto flex flex-col gap-size-2">
                     {isAuthenticated ? (
-                        <Button
-                            onClick={() => {
-                                onClose();
-                                onSignOut();
-                            }}
-                            size="lg"
-                            variant="outline"
-                        >
-                            Log Out
-                        </Button>
+                        <>
+                            <Link
+                                className={getButtonClassName('outline', 'lg')}
+                                onClick={onClose}
+                                to="/favourites"
+                            >
+                                Favourites
+                            </Link>
+                            <Link
+                                className={getButtonClassName('outline', 'lg')}
+                                onClick={onClose}
+                                to="/account"
+                            >
+                                Account
+                            </Link>
+                            <Button
+                                onClick={() => {
+                                    onClose();
+                                    onSignOut();
+                                }}
+                                size="lg"
+                                variant="outline"
+                            >
+                                Log Out
+                            </Button>
+                        </>
                     ) : (
                         <>
                             <Link
