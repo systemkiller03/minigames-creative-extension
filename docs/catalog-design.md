@@ -1,6 +1,6 @@
 # Catalog proxy and favourites design
 
-Status: design agreed, not implemented. Contract: `docs/base_api_endpoints.json`.
+Status: implemented (F1 and F2 still open). Contract: `docs/base_api_endpoints.json`.
 Change the design here first, then the code.
 
 ## Upstream facts that drive the design

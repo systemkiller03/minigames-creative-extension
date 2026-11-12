@@ -15,6 +15,7 @@ import {
   authIdentitiesRepository,
   type GoogleProfile,
 } from '@/repositories/auth-identities.repository';
+import { favouritesService } from '@/services/favourites.service';
 import { emailVerificationService } from '@/services/email-verification.service';
 import {
   ACCESS_TTL_SECONDS,
@@ -187,6 +188,7 @@ export class AuthService {
     }
 
     await sessionsRepository.revokeAllForUser(userId);
+    await favouritesService.releaseUpstream(userId); // before the cascade removes the rows
     await usersRepository.delete(userId); // auth_identities rows cascade
     await Promise.all([
       emailVerificationService.discard(user.email),

@@ -45,8 +45,14 @@ export class TooManyRequestsException extends BaseError {
 }
 
 export class ServiceUnavailableException extends BaseError {
-  constructor(message = 'Service unavailable') {
-    super(503, ErrorCode.SERVICE_UNAVAILABLE, message);
+  constructor(message = 'Service unavailable', retryAfterSeconds?: number) {
+    super(
+      503,
+      ErrorCode.SERVICE_UNAVAILABLE,
+      message,
+      undefined,
+      retryAfterSeconds === undefined ? undefined : { 'Retry-After': String(retryAfterSeconds) },
+    );
   }
 }
 

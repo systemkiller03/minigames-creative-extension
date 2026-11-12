@@ -1,6 +1,6 @@
 # API authentication
 
-The full contract for the frontend is `openapi.yaml` (catalog and favourites are marked planned).
+The full contract for the frontend is `openapi.yaml`.
 
 Set `CORS_ORIGINS` to a comma-separated list of exact frontend origins (scheme and
 host, with a port when needed). Do not include paths or wildcards. Browser requests
@@ -75,3 +75,17 @@ and `SMTP_FROM` for other environments. Authenticated SMTP may additionally use
 `SMTP_USER` and `SMTP_PASSWORD` together. Reset codes expire after 10 minutes, reset
 tokens are single-use, and reset request/code verification limits are enforced per
 IP and email.
+
+## Catalog and favourites
+
+Design: `docs/catalog-design.md`. The gateway proxies the shared MiniGames upstream
+(`UPSTREAM_BASE_URL`, `UPSTREAM_TIMEOUT_MS`) and identifies each user there as
+`u-{user id}@UPSTREAM_EMAIL_DOMAIN` (default `minigames-gateway.invalid`), never by real email.
+
+- `GET /catalog/categories`, `/catalog/leaderboard`, `/catalog/games`, `/catalog/games/:slug` —
+  public; a bearer token adds `isFavorited` / `isLikedByCurrentUser`. Responses are cached in
+  Redis and served stale if the upstream is down (otherwise `502`; upstream 429 becomes `503`).
+- `GET /me/favourites` — the user's favourites as game summaries, newest first.
+- `PUT` / `DELETE /me/favourites/:slug` — idempotent. Postgres is the source of truth; the
+  upstream toggle is called only when state changes, and undone locally if it fails.
+- Deleting an account removes its likes from the upstream (best effort).
