@@ -93,3 +93,15 @@ Design: `docs/catalog-design.md`. The gateway proxies the shared MiniGames upstr
   uncached and carry `isLikedByCurrentUser`. `POST` the same path with `{ text }` (1–500 chars,
   10 per minute) posts under the account's name. `POST /catalog/comments/:id/like` toggles a like
   and returns the new state.
+
+## Docker and CI
+
+Build from the repository root: `docker build -f api/Dockerfile -t minigames-api .`. The image
+runs as a non-root user, listens on `PORT` (3000) and reads all configuration from environment
+variables (see `.env.example`); it does not need a `.env` file. Run migrations as a separate
+release step with the same environment:
+
+    docker run --rm --env-file .env minigames-api node_modules/.bin/node-pg-migrate up -m migrations
+
+`.github/workflows/ci.yml` runs lint, format check, typecheck, build, migrations and the full
+test suite against Postgres and Redis service containers, and builds the Docker image.
