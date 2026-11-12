@@ -51,6 +51,10 @@ Design: `docs/auth-design.md`. Both tokens are HS256 JWTs signed with separate s
 - `DELETE /me/sessions/:sessionId` — end one family. `DELETE /me/sessions` — end all except
   the current one.
 - `POST /auth/logout` and `POST /auth/logout-all` — end the current or all families.
+- `DELETE /auth/account` — body `{ password, confirm: true }`. Permanently deletes the account:
+  ends every session, removes the user and linked Google identities, and drops pending email
+  codes (`204`, cookie cleared). Wrong or missing password is `403`; limited to 5 attempts per
+  user per minute. A Google-only account has no password, so `confirm: true` alone is enough.
 
 Login is limited to 10 attempts per IP per minute; refresh to 30 per IP per minute. Email
 code endpoints are limited per IP and per email.
