@@ -7,6 +7,7 @@ import {
   requireTrustedOrigin,
   validateMiddleware,
 } from '@/middlewares';
+import { deleteAccountSchema } from '@/schemas/me.schema';
 import { loginSchema } from '@/schemas/login.schema';
 import {
   emailVerificationConfirmSchema,
@@ -18,13 +19,10 @@ import {
   passwordResetVerifySchema,
 } from '@/schemas/password-reset.schema';
 import { registerSchema } from '@/schemas/register.schema';
-import { sessionParamsSchema } from '@/schemas/session.schema';
 import { googleCallbackQuerySchema } from '@/schemas/google-oauth.schema';
 import { authService } from '@/services/auth.service';
 import { googleOAuthService } from '@/services/google-oauth.service';
 import { emailVerificationService } from '@/services/email-verification.service';
-import { IDLE_TTL_SECONDS } from '@/services/token.service';
-import { deviceLabel } from '@/utils/device-label';
 import { passwordResetService } from '@/services/password-reset.service';
 import { sessionsRepository } from '@/repositories/sessions.repository';
 import { clearRefreshCookie, setRefreshCookie } from '@/utils/auth-cookies';
@@ -141,39 +139,6 @@ authRouter.post('/refresh', requireTrustedOrigin, rateLimit('refresh', 30), asyn
   res.status(200).json(response);
 });
 
-authRouter.get('/sessions', requireAuth, async (req, res) => {
-  const auth = getAuthContext(req);
-  const sessions = await sessionsRepository.listForUser(auth.userId);
-  const idleMs = IDLE_TTL_SECONDS * 1000;
-  res.json({
-    sessions: sessions.map((session) => ({
-      id: session.id,
-      device: deviceLabel(session.userAgent),
-      userAgent: session.userAgent,
-      ipAddress: session.ipAddress,
-      createdAt: new Date(session.createdAt).toISOString(),
-      lastSeenAt: new Date(session.lastSeenAt).toISOString(),
-      expiresAt: new Date(
-        Math.min(session.lastSeenAt + idleMs, session.maxExpiresAt),
-      ).toISOString(),
-      isCurrent: session.id === auth.sessionId,
-    })),
-  });
-});
-
-authRouter.delete(
-  '/sessions/:sessionId',
-  requireAuth,
-  validateMiddleware({ params: sessionParamsSchema }),
-  async (req, res) => {
-    const auth = getAuthContext(req);
-    const { sessionId } = sessionParamsSchema.parse(req.params);
-    await sessionsRepository.revoke(sessionId, auth.userId);
-    if (sessionId === auth.sessionId) clearRefreshCookie(res, req.baseUrl);
-    res.sendStatus(204);
-  },
-);
-
 authRouter.post('/logout', requireAuth, async (req, res) => {
   const auth = getAuthContext(req);
   await authService.logout(auth.userId, auth.sessionId);
@@ -187,3 +152,15 @@ authRouter.post('/logout-all', requireAuth, async (req, res) => {
   clearRefreshCookie(res, req.baseUrl);
   res.sendStatus(204);
 });
+
+authRouter.delete(
+  '/account',
+  requireAuth,
+  rateLimit('account-delete', 5),
+  validateMiddleware({ body: deleteAccountSchema }),
+  async (req, res) => {
+    await authService.deleteAccount(getAuthContext(req).userId, req.body);
+    clearRefreshCookie(res, req.baseUrl);
+    res.sendStatus(204);
+  },
+);

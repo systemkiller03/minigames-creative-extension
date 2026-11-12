@@ -1,8 +1,14 @@
 import argon2 from 'argon2';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { usersRepository, type User } from '@/repositories/users.repository';
-import { EmailNotVerifiedException, UnauthorizedException } from '@/errors/http-exceptions';
+import {
+  EmailNotVerifiedException,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@/errors/http-exceptions';
 import type { RegisterBody } from '@/schemas/register.schema';
+import type { DeleteAccountBody } from '@/schemas/me.schema';
+import { passwordResetService } from '@/services/password-reset.service';
 import type { LoginBody } from '@/schemas/login.schema';
 import { RotateResult, sessionsRepository } from '@/repositories/sessions.repository';
 import {
@@ -162,6 +168,30 @@ export class AuthService {
       name: user.name,
       createdAt: user.createdAt,
     };
+  }
+
+  /**
+   * Permanently deletes the account. A password account must confirm with its password;
+   * a Google-only account has none, so `confirm: true` is all it can give.
+   * Sessions go first so no refresh token outlives the account.
+   */
+  async deleteAccount(userId: string, input: DeleteAccountBody) {
+    const user = await usersRepository.findById(userId);
+    if (!user) throw new UnauthorizedException('Account no longer exists');
+
+    if (user.passwordHash) {
+      // 403, not 401: a 401 would make the client try to refresh and loop.
+      if (!input.password || !(await argon2.verify(user.passwordHash, input.password))) {
+        throw new ForbiddenException('Password is incorrect');
+      }
+    }
+
+    await sessionsRepository.revokeAllForUser(userId);
+    await usersRepository.delete(userId); // auth_identities rows cascade
+    await Promise.all([
+      emailVerificationService.discard(user.email),
+      passwordResetService.discard(user.email),
+    ]);
   }
 }
 

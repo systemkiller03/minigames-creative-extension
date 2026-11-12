@@ -128,6 +128,11 @@ export class EmailVerificationService {
     const verified = await usersRepository.markEmailVerified(challenge.userId);
     if (!verified) throw new UnauthorizedException('Invalid or expired code');
   }
+
+  /** Drops any pending code for this email (used when the account is deleted). */
+  async discard(email: string) {
+    await redis.del(challengeKey(email));
+  }
 }
 
 export const emailVerificationService = new EmailVerificationService();

@@ -69,7 +69,7 @@ describe('access tokens', () => {
     const { accessToken } = await login(client, user);
 
     const ok = await request(app)
-      .get('/api/auth/sessions')
+      .get('/api/me/sessions')
       .set('Authorization', `Bearer ${accessToken}`);
     expect(ok.status).toBe(200);
   });
@@ -81,7 +81,7 @@ describe('access tokens', () => {
     const refreshJwt = refreshCookieValue(refresh)!;
 
     const attempt = (authorization?: string) => {
-      const req = request(app).get('/api/auth/sessions');
+      const req = request(app).get('/api/me/sessions');
       return authorization ? req.set('Authorization', authorization) : req;
     };
     expect((await attempt()).status).toBe(401);
@@ -96,7 +96,7 @@ describe('access tokens', () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.now() + 5 * 60 * 1000 + 5000);
     const res = await request(app)
-      .get('/api/auth/sessions')
+      .get('/api/me/sessions')
       .set('Authorization', `Bearer ${accessToken}`);
     expect(res.status).toBe(401);
   });

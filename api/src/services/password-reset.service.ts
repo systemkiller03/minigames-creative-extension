@@ -140,6 +140,11 @@ export class PasswordResetService {
     const updated = await usersRepository.updatePasswordHash(challenge.userId, passwordHash);
     if (!updated) throw new UnauthorizedException('Account no longer exists');
   }
+
+  /** Drops any pending reset challenge for this email (used when the account is deleted). */
+  async discard(email: string) {
+    await redis.del(resetKey(email));
+  }
 }
 
 export const passwordResetService = new PasswordResetService();

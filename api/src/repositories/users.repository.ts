@@ -54,6 +54,20 @@ export class UserRepository {
     return rowCount === 1;
   }
 
+  async updateName(id: string, name: string): Promise<User | null> {
+    const { rows } = await pool.query<User>(
+      `UPDATE users SET name = $2, updated_at = now() WHERE id = $1 RETURNING ${USER_COLUMNS}`,
+      [id, name],
+    );
+    return rows[0] ?? null;
+  }
+
+  /** Identities are removed by ON DELETE CASCADE. */
+  async delete(id: string): Promise<boolean> {
+    const { rowCount } = await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
+    return rowCount === 1;
+  }
+
   async markEmailVerified(id: string): Promise<boolean> {
     const { rowCount } = await pool.query(
       `UPDATE users

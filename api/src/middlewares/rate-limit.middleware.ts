@@ -24,9 +24,13 @@ const INCREMENT_MULTI_RATE_LIMIT = `
   return { allowed, maximumTtl }
 `;
 
-export function rateLimit(action: 'login' | 'refresh', limit: number): RequestHandler {
+export function rateLimit(
+  action: 'login' | 'refresh' | 'password-change' | 'account-delete',
+  limit: number,
+): RequestHandler {
   return async (req, _res, next) => {
-    const key = `auth:rate:${action}:${req.ip}`;
+    // Authenticated routes are limited per user, so a shared IP cannot lock a user out.
+    const key = `auth:rate:${action}:${req.auth?.userId ?? req.ip}`;
     const [count, ttl] = (await redis.eval(INCREMENT_RATE_LIMIT, 1, key, '60')) as [number, number];
 
     if (count > limit) {

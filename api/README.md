@@ -40,9 +40,16 @@ Design: `docs/auth-design.md`. Both tokens are HS256 JWTs signed with separate s
 - `POST /auth/refresh` — call with credentials (cookie) from an allowed `Origin`. Returns
   `{ user, accessToken, expiresIn }` and rotates the cookie. Call it on page load to get an
   access token.
-- `GET /auth/sessions` — Bearer-authenticated list of the user's families (devices): `id`,
-  `device`, `userAgent`, `ipAddress`, `createdAt`, `lastSeenAt`, `expiresAt`, `isCurrent`.
-- `DELETE /auth/sessions/:sessionId` — end one family.
+- `GET /me` — profile: `id`, `email`, `name`, `emailVerified`, `hasPassword`, `providers`,
+  `createdAt`. Bearer-authenticated, like every `/me` route.
+- `PATCH /me` — body `{ name }`. Email cannot be changed here.
+- `POST /me/password` — body `{ currentPassword, newPassword }`. Ends every session, including
+  this one, and clears the cookie (`204`). Wrong current password is `403`; an account with no
+  password is `409` (use password reset). Limited to 5 attempts per user per minute.
+- `GET /me/sessions` — the user's families (devices): `id`, `device`, `userAgent`, `ipAddress`,
+  `createdAt`, `lastSeenAt`, `expiresAt`, `isCurrent`.
+- `DELETE /me/sessions/:sessionId` — end one family. `DELETE /me/sessions` — end all except
+  the current one.
 - `POST /auth/logout` and `POST /auth/logout-all` — end the current or all families.
 
 Login is limited to 10 attempts per IP per minute; refresh to 30 per IP per minute. Email

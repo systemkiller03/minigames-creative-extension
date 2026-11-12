@@ -20,7 +20,7 @@ import {
 afterAll(closeConnections);
 
 const bearer = (token: string) => ({ Authorization: `Bearer ${token}` });
-const listSessions = (token: string) => request(app).get('/api/auth/sessions').set(bearer(token));
+const listSessions = (token: string) => request(app).get('/api/me/sessions').set(bearer(token));
 
 describe('devices (session families)', () => {
   it('lists one family per login with a device label and the current one flagged', async () => {
@@ -61,7 +61,7 @@ describe('devices (session families)', () => {
     const b = await login(phone, user);
 
     const res = await request(app)
-      .delete(`/api/auth/sessions/${sessionIdOf(b.accessToken)}`)
+      .delete(`/api/me/sessions/${sessionIdOf(b.accessToken)}`)
       .set(bearer(a.accessToken));
     expect(res.status).toBe(204);
 
@@ -78,7 +78,7 @@ describe('devices (session families)', () => {
     const m = await login(newClient(), mallory);
 
     await request(app)
-      .delete(`/api/auth/sessions/${sessionIdOf(a.accessToken)}`)
+      .delete(`/api/me/sessions/${sessionIdOf(a.accessToken)}`)
       .set(bearer(m.accessToken));
 
     expect((await aliceClient.post('/api/auth/refresh')).status).toBe(200);

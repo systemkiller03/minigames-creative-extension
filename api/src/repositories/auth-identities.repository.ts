@@ -9,6 +9,14 @@ export type GoogleProfile = {
 };
 
 export class AuthIdentitiesRepository {
+  async listProviders(userId: string): Promise<string[]> {
+    const { rows } = await pool.query<{ provider: string }>(
+      `SELECT provider FROM auth_identities WHERE user_id = $1 ORDER BY provider`,
+      [userId],
+    );
+    return rows.map((row) => row.provider);
+  }
+
   async findOrCreateGoogleUser(profile: GoogleProfile): Promise<User> {
     const client = await pool.connect();
 

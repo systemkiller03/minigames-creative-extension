@@ -1,4 +1,4 @@
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
 import { env } from '@/config/env';
 
 const REFRESH_COOKIE = 'refresh_token';
@@ -21,6 +21,11 @@ export function setRefreshCookie(
 
 export function clearRefreshCookie(res: Response, path = '/auth') {
   res.clearCookie(REFRESH_COOKIE, { ...cookieOptions, path });
+}
+
+/** Cookie path from a route outside the auth router (e.g. /api/me -> /api/auth). */
+export function authCookiePathFrom(req: Request) {
+  return req.baseUrl.replace(/\/[^/]+$/, '/auth');
 }
 
 export { REFRESH_COOKIE };
