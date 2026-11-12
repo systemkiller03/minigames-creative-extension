@@ -1,6 +1,6 @@
 # Catalog proxy and favourites design
 
-Status: implemented (F1 and F2 still open). Contract: `docs/base_api_endpoints.json`.
+Status: implemented and verified against the real upstream. Contract: `docs/base_api_endpoints.json`.
 Change the design here first, then the code.
 
 ## Upstream facts that drive the design
@@ -34,10 +34,18 @@ Change the design here first, then the code.
 Before the user row is deleted, un-favourite each of their favourites upstream
 (best effort, logged on failure). Local rows go with the user through the cascade.
 
+## Verified against the real upstream (2026-11-12)
+
+- **F1 resolved:** the upstream accepts `u-{uuid}@minigames-gateway.invalid` for the favourite
+  toggle. Toggling twice returned the game to its original `likesCount`.
+- **F2 measured:** 60 sequential requests in about 7 s (roughly 8 per second) from one IP
+  produced no 429, and no rate-limit headers are sent. The limit is higher than we need, so the
+  current TTLs stand. Our own per-user limits stay as abuse protection.
+- Real shapes match the client: game summaries carry `cardImage`, list `meta` carries
+  `totalPages`, and an unknown slug answers 404 `{error: "Game not found: ..."}`.
+- Not exercised: posting comments (cannot be undone on the shared service).
+
 ## Open items
 
-- **F1:** confirm the upstream accepts a `.invalid` address. If not, change
-  `UPSTREAM_EMAIL_DOMAIN` only.
-- **F2:** upstream rate limit values are unknown. Measure and tune the cache TTLs.
 - **F3:** `likesCount` can drift if someone toggles directly upstream with the same
   synthetic email. Accepted.
