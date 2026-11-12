@@ -55,7 +55,7 @@ export function FeaturedGames() {
         isPending,
         refetch,
     } = useQuery({
-        queryKey: ['home', 'featured-games'],
+        queryKey: ['games', 'featured'],
         queryFn: ({ signal }) => getFeaturedGames(signal),
     });
     const [currentIndex, setCurrentIndex] = useState(0);

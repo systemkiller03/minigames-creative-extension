@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { getApiData } from '@/shared/api/client';
-import { getGames, type Game } from '@/shared/api/games.api';
+import { getFeaturedGames as fetchFeaturedGames, type Game } from '@/shared/api/games.api';
 
 const leaderboardPlayerSchema = z.object({
   rank: z.coerce.number().int().positive(),
@@ -19,11 +19,11 @@ export type FeaturedGame = Game;
 
 export type LeaderboardPlayer = z.infer<typeof leaderboardPlayerSchema>;
 
-export async function getFeaturedGames(signal?: AbortSignal): Promise<FeaturedGame[]> {
-  return getGames({ featured: true, ...(signal ? { signal } : {}) });
+export function getFeaturedGames(signal?: AbortSignal): Promise<FeaturedGame[]> {
+  return fetchFeaturedGames(signal);
 }
 
 export async function getLeaderboardPlayers(signal?: AbortSignal): Promise<LeaderboardPlayer[]> {
-  const response = await getApiData<unknown>('/leaderboard', signal);
+  const response = await getApiData<unknown>('/catalog/leaderboard', signal);
   return leaderboardResponseSchema.parse(response).data;
 }
