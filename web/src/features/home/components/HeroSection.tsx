@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router';
+import { getButtonClassName } from '@/shared/components/Button';
 import heroImage from '@/assets/home/hero-section.png';
 
 export function HeroSection() {
@@ -15,7 +16,7 @@ export function HeroSection() {
                 src={heroImage}
                 width="1920"
             />
-            <div className="mx-auto my-size-8 flex w-full max-w-featured flex-col items-start gap-size-3 rounded-large border-button border-on-primary bg-bg p-size-4 shadow-level-2 desktop:my-0 desktop:max-w-home-hero-copy-narrow desktop:py-size-5 desktop-up:mx-0 desktop-up:max-w-home-hero-copy-wide desktop-up:gap-size-4 desktop-up:rounded-extra-large desktop-up:border-hero-wide desktop-up:p-size-6 desktop-up:shadow-level-3">
+            <div className="mx-auto my-size-8 flex w-full max-w-featured flex-col items-start gap-size-3 rounded-large border-button border-on-primary bg-bg p-size-4 shadow-[4px_4px_0_var(--color-on-primary)] desktop:my-0 desktop:max-w-home-hero-copy-narrow desktop:py-size-5 desktop-up:mx-0 desktop-up:max-w-home-hero-copy-wide desktop-up:gap-size-4 desktop-up:rounded-extra-large desktop-up:border-[3px] desktop-up:p-size-6 desktop-up:shadow-[8px_8px_0_var(--color-on-primary)]">
                 <h1
                     className="max-w-home-hero-title text-headline-medium font-bold leading-tight text-on-primary desktop:text-display-medium desktop-up:text-display-large"
                     id="hero-title"
@@ -27,7 +28,7 @@ export function HeroSection() {
                     puzzle, match 3, farm, and board classics.
                 </p>
                 <Link
-                    className="inline-flex min-h-touch-target items-center justify-center rounded-small border-button border-black bg-primary px-button-medium-x py-button-medium-y font-bold text-on-primary transition-colors hover:bg-primary-high focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring"
+                    className={getButtonClassName('primary', 'lg', 'text-body-large')}
                     to="/library"
                 >
                     Browse Library
