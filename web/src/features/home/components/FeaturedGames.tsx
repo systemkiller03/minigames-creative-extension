@@ -119,7 +119,7 @@ export function FeaturedGames() {
                 className="bg-bg px-size-2 py-size-5 desktop:px-size-5 desktop-up:px-size-15 desktop-up:py-size-5"
             >
                 <SectionHeading id="featured-games-title">New Games</SectionHeading>
-                <div className="mx-auto mt-size-3 w-full max-w-content rounded-large border-button-thin border-outline-variant bg-white p-size-3 text-center shadow-level-1">
+                <div className="mx-auto mt-size-3 w-full max-w-content rounded-large border-button-thin border-outline-variant bg-white p-size-3 text-center shadow-[4px_4px_0_var(--color-on-primary)]">
                     <ErrorState
                         message="Featured games could not be loaded."
                         onRetry={() => void refetch()}
@@ -136,7 +136,7 @@ export function FeaturedGames() {
                 className="bg-bg px-size-2 py-size-5 desktop:px-size-5 desktop-up:px-size-15 desktop-up:py-size-5"
             >
                 <SectionHeading id="featured-games-title">New Games</SectionHeading>
-                <div className="mx-auto mt-size-3 w-full max-w-content rounded-large border-button-thin border-outline-variant bg-white p-size-3 text-center shadow-level-1">
+                <div className="mx-auto mt-size-3 w-full max-w-content rounded-large border-button-thin border-outline-variant bg-white p-size-3 text-center shadow-[4px_4px_0_var(--color-on-primary)]">
                     <EmptyState message="No featured games found. Check back later for new recommendations." />
                 </div>
             </section>
@@ -243,7 +243,7 @@ export function FeaturedGames() {
                             aria-label={`View ${game.name} details in the library`}
                             className={`relative flex h-carousel-card-height shrink-0 overflow-hidden rounded-large bg-white transition-carousel-card duration-700 ease-in-out motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-tertiary tablet-up:h-carousel-card-height-tablet desktop-up:h-carousel-card-height-wide desktop-up:rounded-extra-large ${
                                 visible
-                                    ? `mx-[4px] border-button border-on-primary desktop-up:shadow-level-2 ${getSlotClasses(slot)}`
+                                    ? `mx-[4px] border-[2.5px] border-solid border-on-primary shadow-[4px_4px_0_var(--color-on-primary)] ${getSlotClasses(slot)}`
                                     : 'pointer-events-none mx-0 basis-0 border-0 opacity-0'
                             }`}
                             draggable={false}

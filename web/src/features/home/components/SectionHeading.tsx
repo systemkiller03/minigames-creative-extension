@@ -11,7 +11,7 @@ export function SectionHeading({ children, id }: SectionHeadingProps) {
         >
             <span
                 aria-hidden="true"
-                className="h-full min-h-size-3 w-section-heading-marker rounded-small border-button-thin border-on-primary bg-primary"
+                className="h-full min-h-size-3 w-section-heading-marker rounded-[4px] border-[1.5px] border-solid border-on-primary bg-primary"
             />
             {children}
         </h2>
