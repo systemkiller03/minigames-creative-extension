@@ -1,0 +1,36 @@
+#!/bin/bash
+# Runs once at first boot. Everything is logged to /var/log/demo-bootstrap.log.
+set -euxo pipefail
+exec > >(tee -a /var/log/demo-bootstrap.log /dev/console) 2>&1
+
+# Safety net: power off (which terminates the instance) after the configured lifetime.
+shutdown -P +${lifetime}
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y docker.io docker-compose-v2 git curl openssl
+systemctl enable --now docker
+
+TOKEN=$(curl -sX PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 120')
+IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+HOST='${domain}'
+if [ -z "$HOST" ]; then HOST="$(echo "$IP" | tr . -).sslip.io"; fi
+
+git clone --depth 1 --branch '${ref}' '${repo}' /opt/minigames
+cd /opt/minigames/deploy
+
+# Secrets are generated here and never leave the instance.
+cat > .env <<ENV
+SITE_ADDRESS=$HOST
+UPSTREAM_BASE_URL=${upstream_base_url}
+DB_PASSWORD=$(openssl rand -hex 24)
+JWT_ACCESS_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+MAILPIT_USER=demo
+MAILPIT_PASSWORD=${mailpit_password}
+ENV
+chmod 600 .env
+
+docker compose up -d --build
+docker compose ps
+echo "DEMO READY: https://$HOST"
