@@ -1,0 +1,1096 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "MiniGames API",
+    "description": "REST API for the MiniGames project (RS School Qualifying Stage), implemented from the official backend specification. Every collection is wrapped in `{ data, meta }`, dates are ISO 8601 UTC, and mutating requests authenticate by carrying a `userEmail` field in the body.",
+    "version": "1.0.0"
+  },
+  "components": {
+    "schemas": {}
+  },
+  "paths": {
+    "/api/categories": {
+      "get": {
+        "summary": "List filter categories",
+        "tags": ["Catalog"],
+        "description": "Categories for the Library filter chips. Exactly one entry has `isDefault: true` — that chip is selected on first visit.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string",
+                            "example": "puzzle",
+                            "description": "Value for the `category` query parameter"
+                          },
+                          "label": {
+                            "type": "string",
+                            "example": "Puzzle",
+                            "description": "Text shown on the filter chip"
+                          },
+                          "isDefault": {
+                            "type": "boolean",
+                            "example": false,
+                            "description": "Exactly one category is the default selection"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "totalItems": {
+                          "type": "integer",
+                          "example": 7
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Game categories for Library filter chips"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/leaderboard": {
+      "get": {
+        "summary": "Top players of the week",
+        "tags": ["Catalog"],
+        "description": "Always returns the top 5 players for the Home page. Takes no query parameters.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "rank": {
+                            "type": "integer",
+                            "example": 1
+                          },
+                          "playerName": {
+                            "type": "string",
+                            "example": "Alex_Pro99"
+                          },
+                          "gamesPlayed": {
+                            "type": "integer",
+                            "example": 142
+                          },
+                          "totalScore": {
+                            "type": "integer",
+                            "example": 94250
+                          },
+                          "streakDays": {
+                            "type": "integer",
+                            "example": 12,
+                            "description": "Plain number — the 🔥 emoji is added by the frontend"
+                          },
+                          "favoriteGameSlug": {
+                            "type": "string",
+                            "example": "heartopia"
+                          },
+                          "favoriteGameName": {
+                            "type": "string",
+                            "example": "Heartopia"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "totalItems": {
+                          "type": "integer",
+                          "example": 5
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Top Players This Week"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games": {
+      "get": {
+        "summary": "List games (library or featured slider)",
+        "tags": ["Games"],
+        "description": "Two modes. `?featured=true` returns all 9 featured games and ignores page/category/sort — that is the New Games slider. Otherwise the Library is paginated, filtered and sorted.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "true"
+            },
+            "in": "query",
+            "name": "featured",
+            "required": false,
+            "description": "`true` returns the 9 featured games and ignores the other parameters"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "1"
+            },
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "description": "Page number ≥ 1, default 1"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "6"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Items per page, 1–100, default 10"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "all"
+            },
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "description": "One of: all, puzzle, card, match, farm, strategy, arcade. `all` means no filter."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "rating-desc"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "One of: rating-desc (default), rating-asc, name-asc, name-desc"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "slug": {
+                            "type": "string",
+                            "example": "tukoni-forest-keepers",
+                            "description": "gameSlug — key for the details route"
+                          },
+                          "name": {
+                            "type": "string",
+                            "example": "Tukoni: Forest Keepers"
+                          },
+                          "category": {
+                            "type": "string",
+                            "example": "puzzle"
+                          },
+                          "price": {
+                            "type": "string",
+                            "example": "Free",
+                            "description": "\"Free\" or a price like \"$1.99\""
+                          },
+                          "shortDescription": {
+                            "type": "string",
+                            "example": "A cozy hand-drawn puzzle-adventure about a little forest spirit helping the Tukoni forest prepare for winter."
+                          },
+                          "rating": {
+                            "type": "number",
+                            "example": 4.9,
+                            "description": "0.0–5.0, one decimal"
+                          },
+                          "likesCount": {
+                            "type": "integer",
+                            "example": 31200
+                          },
+                          "cardImage": {
+                            "type": "string",
+                            "example": "/assets/images/games/tukoni-forest-keepers-card.jpg"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "example": 1
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "example": 6
+                        },
+                        "totalItems": {
+                          "type": "integer",
+                          "example": 24
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "example": 4,
+                          "description": "ceil(totalItems / limit)"
+                        },
+                        "appliedFilter": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "example": {
+                            "category": "all",
+                            "sort": "rating-desc"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameSlug}": {
+      "get": {
+        "summary": "Game details",
+        "tags": ["Games"],
+        "description": "Everything the Game Details modal needs: hero banner, full description, specs and the top 3 records.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "student@rs.school"
+            },
+            "in": "query",
+            "name": "userEmail",
+            "required": false,
+            "description": "When supplied, `isLikedByCurrentUser` reflects this user; otherwise it is always false"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "tukoni-forest-keepers"
+            },
+            "in": "path",
+            "name": "gameSlug",
+            "required": true,
+            "description": "kebab-case game identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "slug": {
+                          "type": "string",
+                          "example": "tukoni-forest-keepers"
+                        },
+                        "name": {
+                          "type": "string",
+                          "example": "Tukoni: Forest Keepers"
+                        },
+                        "heroImage": {
+                          "type": "string",
+                          "example": "/assets/images/games/tukoni-forest-keepers-hero.jpg"
+                        },
+                        "rating": {
+                          "type": "number",
+                          "example": 4.9
+                        },
+                        "likesCount": {
+                          "type": "integer",
+                          "example": 31200
+                        },
+                        "isLikedByCurrentUser": {
+                          "type": "boolean",
+                          "example": false,
+                          "description": "Always false unless `userEmail` is supplied"
+                        },
+                        "fullDescription": {
+                          "type": "string",
+                          "example": "Tukoni: Forest Keepers — a cozy hand-drawn puzzle-adventure…"
+                        },
+                        "specs": {
+                          "type": "object",
+                          "properties": {
+                            "genre": {
+                              "type": "string",
+                              "example": "Puzzle"
+                            },
+                            "players": {
+                              "type": "string",
+                              "example": "Solo"
+                            },
+                            "duration": {
+                              "type": "string",
+                              "example": "40-90 min"
+                            },
+                            "price": {
+                              "type": "string",
+                              "example": "Free"
+                            }
+                          }
+                        },
+                        "topRecords": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "position": {
+                                "type": "integer",
+                                "example": 1
+                              },
+                              "playerName": {
+                                "type": "string",
+                                "example": "ForestSpirit"
+                              },
+                              "score": {
+                                "type": "integer",
+                                "example": 356700
+                              },
+                              "achievedAt": {
+                                "type": "string",
+                                "example": "2026-08-28T14:30:00Z",
+                                "description": "ISO 8601 UTC"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameSlug}/favorite": {
+      "post": {
+        "summary": "Add or remove a game from favorites (toggle)",
+        "tags": ["Games"],
+        "description": "One request flips the like state for the given user. Repeating it with the same `userEmail` toggles back.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userEmail": {
+                    "type": "string",
+                    "example": "student@rs.school",
+                    "description": "Required by the API (missing → 401), intentionally not enforced by schema validation"
+                  }
+                },
+                "example": {
+                  "userEmail": "student@rs.school"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "tukoni-forest-keepers"
+            },
+            "in": "path",
+            "name": "gameSlug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "gameSlug": {
+                          "type": "string",
+                          "example": "tukoni-forest-keepers"
+                        },
+                        "isFavorited": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "likesCount": {
+                          "type": "integer",
+                          "example": 31201
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Authentication required: userEmail is missing"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/games/{gameSlug}/comments": {
+      "get": {
+        "summary": "List comments for a game",
+        "tags": ["Comments"],
+        "description": "`meta.totalComments` is always the full count for the game, even when `limit` trims the returned list — that is the number the \"Comments (12)\" heading shows.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "3"
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "How many comments to return; omit for all"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "newest"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "One of: newest, oldest. Omit to keep insertion order."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "student@rs.school"
+            },
+            "in": "query",
+            "name": "userEmail",
+            "required": false,
+            "description": "When supplied, `isLikedByCurrentUser` reflects this user"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "example": "tukoni-forest-keepers"
+            },
+            "in": "path",
+            "name": "gameSlug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "commentId": {
+                            "type": "string",
+                            "example": "c5d9f2a1-7c3b-4e8f-9a0d-000000000001"
+                          },
+                          "authorName": {
+                            "type": "string",
+                            "example": "ForestDweller"
+                          },
+                          "text": {
+                            "type": "string",
+                            "example": "The hand-drawn art is absolutely magical 🍄",
+                            "description": "Sanitized server-side"
+                          },
+                          "likesCount": {
+                            "type": "integer",
+                            "example": 12
+                          },
+                          "isLikedByCurrentUser": {
+                            "type": "boolean",
+                            "example": false
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "example": "2026-08-30T07:00:00Z",
+                            "description": "ISO 8601 UTC"
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": true,
+                      "properties": {
+                        "totalComments": {
+                          "type": "integer",
+                          "example": 3,
+                          "description": "Total for the game, even when `limit` is used"
+                        },
+                        "returnedCount": {
+                          "type": "integer",
+                          "example": 3
+                        },
+                        "sort": {
+                          "type": "string",
+                          "example": "newest"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Post a comment",
+        "tags": ["Comments"],
+        "description": "Creates a comment. `text` is sanitized server-side (HTML stripped, entities escaped) and trimmed to 500 characters; `authorName` is trimmed to 30.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userEmail": {
+                    "type": "string",
+                    "example": "student@rs.school",
+                    "description": "Missing → 401"
+                  },
+                  "authorName": {
+                    "type": "string",
+                    "example": "ForestDweller",
+                    "description": "2–30 characters"
+                  },
+                  "text": {
+                    "type": "string",
+                    "example": "Such a calming little game!",
+                    "description": "1–500 characters, sanitized server-side"
+                  }
+                },
+                "example": {
+                  "userEmail": "student@rs.school",
+                  "authorName": "ForestDweller",
+                  "text": "Such a calming little game!"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "tukoni-forest-keepers"
+            },
+            "in": "path",
+            "name": "gameSlug",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "commentId": {
+                          "type": "string",
+                          "example": "c5d9f2a1-7c3b-4e8f-9a0d-000000000001"
+                        },
+                        "authorName": {
+                          "type": "string",
+                          "example": "ForestDweller"
+                        },
+                        "text": {
+                          "type": "string",
+                          "example": "The hand-drawn art is absolutely magical 🍄",
+                          "description": "Sanitized server-side"
+                        },
+                        "likesCount": {
+                          "type": "integer",
+                          "example": 12
+                        },
+                        "isLikedByCurrentUser": {
+                          "type": "boolean",
+                          "example": false
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "example": "2026-08-30T07:00:00Z",
+                          "description": "ISO 8601 UTC"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Authentication required: userEmail is missing"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/comments/{commentId}/like": {
+      "post": {
+        "summary": "Like or unlike a comment (toggle)",
+        "tags": ["Comments"],
+        "description": "Flips the current user’s like on a comment. Repeating it with the same `userEmail` toggles back. The comment is identified by the path alone, so the response does not repeat its id.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userEmail": {
+                    "type": "string",
+                    "example": "student@rs.school",
+                    "description": "Required by the API (missing → 401), intentionally not enforced by schema validation"
+                  }
+                },
+                "example": {
+                  "userEmail": "student@rs.school"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "c5d9f2a1-7c3b-4e8f-9a0d-000000000001"
+            },
+            "in": "path",
+            "name": "commentId",
+            "required": true,
+            "description": "UUID from the comments list"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "isLikedByCurrentUser": {
+                          "type": "boolean",
+                          "example": true
+                        },
+                        "likesCount": {
+                          "type": "integer",
+                          "example": 13
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Authentication required: userEmail is missing"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Game not found: invalid-slug"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["error"],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Rate limit exceeded. Try again in 42 seconds"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Catalog",
+      "description": "Categories and the leaderboard for the Home page"
+    },
+    {
+      "name": "Games",
+      "description": "Game library, details and favorites"
+    },
+    {
+      "name": "Comments",
+      "description": "Game comments and comment likes"
+    }
+  ],
+  "servers": [
+    {
+      "url": "https://faxb76kxra.execute-api.eu-central-1.amazonaws.com",
+      "description": "Current server"
+    }
+  ]
+}

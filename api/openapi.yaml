@@ -1,0 +1,808 @@
+openapi: 3.1.0
+info:
+  title: MiniGames Gateway API
+  version: 0.1.0
+  description: |
+    Identity and gateway service in front of the MiniGames upstream API.
+    This file is the contract between backend and frontend. Change it first, then the code.
+
+    **Status of each part**
+    - `Auth`, `Me`, `Health`: implemented and covered by integration tests.
+    - `Catalog`, `Favourites`: **planned** (shapes follow `docs/catalog-design.md`, C1-C6). Paths
+      tagged `x-status: planned` may still change until they are implemented.
+    - Comments: not in this version.
+
+    **Authentication in the browser**
+    1. `POST /auth/login` returns `accessToken` (JWT, 5 minutes) in the body and sets the
+       `refresh_token` cookie (httpOnly, SameSite=Lax, `Path=/api/auth`, 7 days idle, 30 days max).
+    2. Keep the access token **in memory only**. Send it as `Authorization: Bearer <token>`.
+    3. On page load, and whenever a request returns 401 `UNAUTHORIZED`, call `POST /auth/refresh`
+       with `credentials: 'include'`. It returns a new access token and rotates the cookie.
+       If refresh itself fails with 401, the session is over: send the user to log in.
+    4. Every request that needs the cookie must use `credentials: 'include'`, and the page origin
+       must be listed in the server's `CORS_ORIGINS`.
+    5. A revoked session's access token keeps working until it expires (at most 5 minutes).
+
+    **Errors** always have this shape, with a stable `code` to branch on:
+    `{ "error": { "code": "...", "message": "...", "details": [...] } }`.
+    Rate limit responses (429) carry a `Retry-After` header in seconds.
+servers:
+  - url: http://localhost:3000/api
+    description: Local development
+tags:
+  - name: Auth
+  - name: Me
+  - name: Catalog
+    description: Planned
+  - name: Favourites
+    description: Planned
+  - name: Health
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Liveness and dependency check
+      responses:
+        '200':
+          description: All dependencies healthy
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        '503':
+          description: A dependency is down
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Create an account and email a verification code
+      description: |
+        Always answers `201` with the same message, whether or not the email is already registered
+        (no account enumeration). The user must verify the email before logging in.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterBody' }
+      responses:
+        '201': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /auth/verify-email/request:
+    post:
+      tags: [Auth]
+      summary: Send a new verification code
+      description: Generic response. At most one code per minute per email; limited per IP and email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailBody' }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/verify-email/confirm:
+    post:
+      tags: [Auth]
+      summary: Confirm the emailed 8-digit code
+      description: Marks the email verified. The user then logs in. Five wrong codes invalidate the code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CodeBody' }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in with email and password
+      description: |
+        Sets the `refresh_token` cookie. A correct password with an unverified email answers
+        `403 EMAIL_NOT_VERIFIED`; the client should offer `POST /auth/verify-email/request`.
+        A wrong password and an unknown email give the same `401`. Limit: 10 per IP per minute.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginBody' }
+      responses:
+        '200':
+          description: Logged in
+          headers:
+            Set-Cookie:
+              description: '`refresh_token`, httpOnly, SameSite=Lax, Path=/api/auth'
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResult' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: '`EMAIL_NOT_VERIFIED`'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Get a new access token and rotate the refresh cookie
+      description: |
+        Send with `credentials: 'include'` from an allowed origin (`Origin` is checked, otherwise
+        `403`). Call it on page load. Two tabs refreshing at once is safe (20 second grace window);
+        presenting an old refresh token after that revokes the whole session. Limit: 30 per IP per minute.
+      security: [{ refreshCookie: [] }]
+      responses:
+        '200':
+          description: New access token
+          headers:
+            Set-Cookie:
+              description: Rotated `refresh_token`
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: End the current session
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Logged out, cookie cleared }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout-all:
+    post:
+      tags: [Auth]
+      summary: End every session of the user, including this one
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: All sessions ended, cookie cleared }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/password-reset/request:
+    post:
+      tags: [Auth]
+      summary: Email a password reset code
+      description: Generic response whether or not the account exists.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EmailBody' }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/password-reset/verify:
+    post:
+      tags: [Auth]
+      summary: Exchange the emailed code for a single-use reset token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CodeBody' }
+      responses:
+        '200':
+          description: Code accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [message, resetToken]
+                properties:
+                  message: { type: string }
+                  resetToken: { type: string }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/password-reset/confirm:
+    post:
+      tags: [Auth]
+      summary: Set a new password with the reset token
+      description: Ends every session of the user and also marks the email verified.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, resetToken, newPassword]
+              properties:
+                email: { type: string, format: email }
+                resetToken: { type: string, minLength: 32, maxLength: 128 }
+                newPassword: { type: string, minLength: 8, maxLength: 128 }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /auth/google/login:
+    get:
+      tags: [Auth]
+      summary: Start Google sign-in
+      description: Navigate the browser here (not fetch). Only available when Google OAuth is configured.
+      responses:
+        '302': { description: Redirect to Google }
+
+  /auth/google/callback:
+    get:
+      tags: [Auth]
+      summary: Google redirects here
+      description: |
+        Sets the refresh cookie and redirects to the frontend URL with
+        `?provider=google&status=success`. The frontend then calls `POST /auth/refresh` to get an
+        access token. Not called by the frontend directly.
+      responses:
+        '302': { description: Redirect to the frontend }
+
+  /auth/account:
+    delete:
+      tags: [Auth]
+      summary: Permanently delete the account
+      description: |
+        Ends every session, removes the user and linked identities. A password account must send
+        `password`; a Google-only account sends `confirm: true` alone. Wrong or missing password is
+        `403`. Limit: 5 per user per minute.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirm]
+              properties:
+                password: { type: string, minLength: 1, maxLength: 128 }
+                confirm: { const: true }
+      responses:
+        '204': { description: Deleted, cookie cleared }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /me:
+    get:
+      tags: [Me]
+      summary: Current user's profile
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user: { $ref: '#/components/schemas/Profile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    patch:
+      tags: [Me]
+      summary: Change the display name
+      description: The email cannot be changed here.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 2, maxLength: 30 }
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [user]
+                properties:
+                  user: { $ref: '#/components/schemas/Profile' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/password:
+    post:
+      tags: [Me]
+      summary: Change password
+      description: |
+        Ends **every** session including this one and clears the cookie, so the client must log in
+        again. Wrong current password is `403`; an account with no password is `409` (use password
+        reset). Limit: 5 per user per minute.
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string, minLength: 1, maxLength: 128 }
+                newPassword:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: Must differ from the current password
+      responses:
+        '204': { description: Changed, all sessions ended }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409':
+          description: Account has no password
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+
+  /me/sessions:
+    get:
+      tags: [Me]
+      summary: List the user's devices (sessions)
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Sessions, most recently used first
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sessions]
+                properties:
+                  sessions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Session' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [Me]
+      summary: End all sessions except the current one
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Other sessions ended }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/sessions/{sessionId}:
+    delete:
+      tags: [Me]
+      summary: End one session
+      description: Ending the current session also clears the cookie. Unknown ids are a no-op `204`.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204': { description: Ended }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ---------------------------------------------------------------------------
+  # PLANNED: shapes may change until implemented. Catalog responses mirror the
+  # upstream `{ data, meta }` envelope. Public; a bearer token is optional.
+  # ---------------------------------------------------------------------------
+  /catalog/categories:
+    get:
+      tags: [Catalog]
+      x-status: planned
+      summary: Filter categories (exactly one has isDefault)
+      responses:
+        '200':
+          description: Categories
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+                  meta: { type: object, additionalProperties: true }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
+  /catalog/leaderboard:
+    get:
+      tags: [Catalog]
+      x-status: planned
+      summary: Top 5 players of the week
+      responses:
+        '200':
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/LeaderboardEntry' }
+                  meta: { type: object, additionalProperties: true }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
+  /catalog/games:
+    get:
+      tags: [Catalog]
+      x-status: planned
+      summary: Library (paginated) or the featured slider
+      description: |
+        `featured=true` returns the 9 featured games and ignores the other parameters.
+        When the request carries a valid bearer token, each item also has `isFavorited`.
+      parameters:
+        - { name: featured, in: query, schema: { type: boolean } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 10 },
+          }
+        - name: category
+          in: query
+          description: A slug from `/catalog/categories`; `all` means no filter
+          schema: { type: string, default: all }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [rating-desc, rating-asc, name-asc, name-desc]
+            default: rating-desc
+      security: [{}, { bearerAuth: [] }]
+      responses:
+        '200':
+          description: Games
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/GameSummary' }
+                  meta:
+                    type: object
+                    additionalProperties: true
+                    properties:
+                      page: { type: integer }
+                      limit: { type: integer }
+                      totalItems: { type: integer }
+                      totalPages: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
+  /catalog/games/{slug}:
+    get:
+      tags: [Catalog]
+      x-status: planned
+      summary: Game details
+      description: '`isLikedByCurrentUser` is true only for an authenticated user who favourited the game.'
+      security: [{}, { bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Details
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/GameDetails' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+        '503': { $ref: '#/components/responses/UpstreamError' }
+
+  /me/favourites:
+    get:
+      tags: [Favourites]
+      x-status: planned
+      summary: The user's favourite games, newest first
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Favourites
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/GameSummary' }
+                  meta:
+                    type: object
+                    properties:
+                      totalItems: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+  /me/favourites/{slug}:
+    put:
+      tags: [Favourites]
+      x-status: planned
+      summary: Add to favourites (idempotent)
+      description: Repeating the request leaves the game favourited. No body.
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { $ref: '#/components/responses/FavouriteState' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+    delete:
+      tags: [Favourites]
+      x-status: planned
+      summary: Remove from favourites (idempotent)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: slug, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { $ref: '#/components/responses/FavouriteState' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '502': { $ref: '#/components/responses/UpstreamError' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from login or refresh
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+
+  responses:
+    Message:
+      description: Generic confirmation
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [message]
+            properties:
+              message: { type: string }
+    ValidationError:
+      description: '`VALIDATION_ERROR`; `details` lists `{ in, path, message }`'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: '`UNAUTHORIZED`: missing, invalid or expired credentials'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Forbidden:
+      description: '`FORBIDDEN`: not allowed (wrong password, untrusted origin)'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: '`NOT_FOUND`'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    RateLimited:
+      description: '`RATE_LIMITED`'
+      headers:
+        Retry-After:
+          description: Seconds until the limit resets
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    UpstreamError:
+      description: '`UPSTREAM_ERROR` (502) or `SERVICE_UNAVAILABLE` (503); retry later'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    FavouriteState:
+      description: Resulting state
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [data]
+            properties:
+              data:
+                type: object
+                required: [gameSlug, isFavorited, likesCount]
+                properties:
+                  gameSlug: { type: string }
+                  isFavorited: { type: boolean }
+                  likesCount: { type: integer }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - UNAUTHORIZED
+                - FORBIDDEN
+                - EMAIL_NOT_VERIFIED
+                - NOT_FOUND
+                - CONFLICT
+                - RATE_LIMITED
+                - SERVICE_UNAVAILABLE
+                - UPSTREAM_ERROR
+                - INTERNAL
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  in: { type: string, enum: [body, query, params] }
+                  path: { type: string }
+                  message: { type: string }
+    Health:
+      type: object
+      required: [status, checks]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        checks: { type: object, additionalProperties: true }
+    RegisterBody:
+      type: object
+      required: [email, name, password]
+      properties:
+        email: { type: string, format: email }
+        name: { type: string, minLength: 2, maxLength: 30 }
+        password: { type: string, minLength: 8, maxLength: 128 }
+    LoginBody:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 1, maxLength: 128 }
+    EmailBody:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string, format: email }
+    CodeBody:
+      type: object
+      required: [email, code]
+      properties:
+        email: { type: string, format: email }
+        code: { type: string, pattern: '^\d{8}$' }
+    AuthResult:
+      type: object
+      required: [user, accessToken, expiresIn]
+      properties:
+        user: { $ref: '#/components/schemas/User' }
+        accessToken: { type: string }
+        expiresIn:
+          type: integer
+          description: Access token lifetime in seconds (300)
+    User:
+      type: object
+      required: [id, email, name, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        createdAt: { type: string, format: date-time }
+    Profile:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [emailVerified, hasPassword, providers]
+          properties:
+            emailVerified: { type: boolean }
+            hasPassword:
+              type: boolean
+              description: False for Google-only accounts
+            providers:
+              type: array
+              items: { type: string, examples: [google] }
+    Session:
+      type: object
+      required: [id, device, userAgent, ipAddress, createdAt, lastSeenAt, expiresAt, isCurrent]
+      properties:
+        id: { type: string, format: uuid }
+        device: { type: string, examples: [Chrome on Windows] }
+        userAgent: { type: string }
+        ipAddress: { type: string }
+        createdAt: { type: string, format: date-time }
+        lastSeenAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+        isCurrent: { type: boolean }
+    Category:
+      type: object
+      required: [slug, label, isDefault]
+      properties:
+        slug: { type: string, examples: [puzzle] }
+        label: { type: string, examples: [Puzzle] }
+        isDefault: { type: boolean }
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank: { type: integer }
+        playerName: { type: string }
+        gamesPlayed: { type: integer }
+        totalScore: { type: integer }
+        streakDays: { type: integer }
+        favoriteGameSlug: { type: string }
+        favoriteGameName: { type: string }
+    GameSummary:
+      type: object
+      required: [slug, name, category, price, shortDescription, rating, likesCount, cardImage]
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        category: { type: string }
+        price: { type: string, description: '"Free" or e.g. "$1.99"' }
+        shortDescription: { type: string }
+        rating: { type: number, minimum: 0, maximum: 5 }
+        likesCount: { type: integer }
+        cardImage: { type: string }
+        isFavorited:
+          type: boolean
+          description: Present only when the request is authenticated
+    GameDetails:
+      type: object
+      properties:
+        slug: { type: string }
+        name: { type: string }
+        heroImage: { type: string }
+        rating: { type: number }
+        likesCount: { type: integer }
+        isLikedByCurrentUser: { type: boolean }
+        fullDescription: { type: string }
+        specs:
+          type: object
+          properties:
+            genre: { type: string }
+            players: { type: string }
+            duration: { type: string }
+            price: { type: string }
+        topRecords:
+          type: array
+          items:
+            type: object
+            properties:
+              position: { type: integer }
+              playerName: { type: string }
+              score: { type: integer }
+              achievedAt: { type: string, format: date-time }

@@ -1,5 +1,7 @@
 # API authentication
 
+The full contract for the frontend is `openapi.yaml` (catalog and favourites are marked planned).
+
 Set `CORS_ORIGINS` to a comma-separated list of exact frontend origins (scheme and
 host, with a port when needed). Do not include paths or wildcards. Browser requests
 that use cookies must include credentials. Production cookies are `Secure`, host-only,
