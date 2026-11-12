@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { useEffect, useRef } from 'react';
-import { Button, getButtonClassName } from '@/shared/components/Button';
+import logoSource from '@/assets/Logo.svg';
+import { getButtonClassName } from '@/shared/components/Button';
 import { Icon } from '@/shared/components/Icon';
 import { NavAnchor } from '@/shared/components/NavAnchor';
 import { NAV_ITEMS } from '@/shared/components/NavLinks';
@@ -47,30 +48,39 @@ export function MobileDrawer({ open, isAuthenticated, onClose, onSignOut }: Mobi
             <aside
                 aria-label="Menu"
                 aria-modal="true"
-                className={`absolute inset-y-0 right-0 flex w-[320px] max-w-full flex-col gap-size-4 border-l-2 border-on-primary bg-bg p-size-3 transition-transform duration-fast ease-fast ${open ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`absolute inset-y-0 right-0 flex w-[320px] max-w-full flex-col gap-size-4 border-l-2 border-on-primary bg-bg-footer p-size-3 transition-transform duration-fast ease-fast ${open ? 'translate-x-0' : 'translate-x-full'}`}
                 id="mobile-navigation"
                 role="dialog"
             >
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                    <Link
+                        aria-label="MiniGames home"
+                        className="inline-flex items-center gap-size-1 font-inter text-headline-small font-bold text-white"
+                        onClick={onClose}
+                        to="/"
+                    >
+                        <img alt="" height="32" src={logoSource} width="32" />
+                        <span>MiniGames</span>
+                    </Link>
                     <button
                         aria-label="Close menu"
-                        className="inline-flex size-icon-button-small cursor-pointer items-center justify-center rounded-small text-on-primary focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring"
+                        className="inline-flex size-icon-button-small cursor-pointer items-center justify-center rounded-small bg-bg-footer-low text-white focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-primary"
                         onClick={onClose}
                         ref={closeRef}
                         type="button"
                     >
-                        <Icon name="close" />
+                        <Icon className="text-[20px]" name="close" />
                     </button>
                 </div>
 
                 <nav aria-label="Mobile navigation">
-                    <ul className="flex list-none flex-col gap-size-1">
+                    <ul className="flex list-none flex-col gap-size-3">
                         {NAV_ITEMS.map((item) => (
                             <li key={item.label}>
                                 <NavAnchor
-                                    activeClassName="bg-surface font-bold text-on-primary"
-                                    className="block rounded-small px-size-2 py-size-1 text-title-xxx-small leading-normal transition-colors hover:bg-surface"
-                                    inactiveClassName="font-medium text-on-bg"
+                                    activeClassName="font-bold text-primary"
+                                    className="block text-title-xxx-small leading-normal transition-colors hover:text-white"
+                                    inactiveClassName="font-medium text-on-bg-footer"
                                     item={item}
                                     onNavigate={onClose}
                                 />
@@ -83,34 +93,50 @@ export function MobileDrawer({ open, isAuthenticated, onClose, onSignOut }: Mobi
                     {isAuthenticated ? (
                         <>
                             <Link
-                                className={getButtonClassName('outline', 'lg')}
+                                className={getButtonClassName(
+                                    'outline',
+                                    'lg',
+                                    'border-white text-white hover:bg-bg-footer-low',
+                                )}
                                 onClick={onClose}
                                 to="/favourites"
                             >
                                 Favourites
                             </Link>
                             <Link
-                                className={getButtonClassName('outline', 'lg')}
+                                className={getButtonClassName(
+                                    'outline',
+                                    'lg',
+                                    'border-white text-white hover:bg-bg-footer-low',
+                                )}
                                 onClick={onClose}
                                 to="/account"
                             >
                                 Account
                             </Link>
-                            <Button
+                            <button
+                                className={getButtonClassName(
+                                    'outline',
+                                    'lg',
+                                    'border-white text-white hover:bg-bg-footer-low',
+                                )}
                                 onClick={() => {
                                     onClose();
                                     onSignOut();
                                 }}
-                                size="lg"
-                                variant="outline"
+                                type="button"
                             >
                                 Log Out
-                            </Button>
+                            </button>
                         </>
                     ) : (
                         <>
                             <Link
-                                className={getButtonClassName('outline', 'lg')}
+                                className={getButtonClassName(
+                                    'outline',
+                                    'lg',
+                                    'border-white text-white hover:bg-bg-footer-low',
+                                )}
                                 onClick={onClose}
                                 search={(previous) => ({ ...previous, auth: 'login' })}
                                 to="."
