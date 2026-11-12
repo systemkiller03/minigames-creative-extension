@@ -21,3 +21,8 @@ SCSS token source.
 The API client defaults to the same-origin `/api` prefix. For local development
 against a separate API origin, copy `.env.example` to `.env.local` and set
 `VITE_API_URL` to that API's `/api` base URL.
+
+The Library loads `GET /games`, which returns a `{ "data": [...] }` object. Each
+game includes `slug`, `name`, `category`, `price`, `shortDescription`, `rating`,
+`likesCount`, and `cardImage`. Card artwork is resolved from the local assets by
+game slug.
