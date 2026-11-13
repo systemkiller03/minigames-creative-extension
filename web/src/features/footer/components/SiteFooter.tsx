@@ -52,14 +52,14 @@ function SocialLink({ label, icon }: { label: string; icon: string }) {
     return (
         <a
             aria-label={label}
-            className="inline-flex size-icon-button-small cursor-pointer items-center justify-center rounded-full bg-bg-footer-low text-white transition-colors hover:bg-bg-footer-lowest focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-primary above-mobile:size-icon-button-medium"
+            className="inline-flex size-icon-button-small cursor-pointer items-center justify-center rounded-full bg-bg-footer-low text-white transition-colors hover:bg-bg-footer-lowest focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-primary desktop-up:size-icon-button-medium"
             href="/"
             onClick={(event) => {
                 event.preventDefault();
                 void navigate({ to: '/' });
             }}
         >
-            <Icon className="text-[16px] above-mobile:text-[20px]" name={icon} />
+            <Icon className="text-[16px] desktop-up:text-[20px]" name={icon} />
         </a>
     );
 }
@@ -127,7 +127,7 @@ export function SiteFooter() {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-size-1 border-t border-bg-footer-lowest pt-size-2 text-label-medium above-mobile:flex-row above-mobile:items-center above-mobile:justify-between above-mobile:gap-size-2 above-mobile:pt-size-3 above-mobile:text-body-small">
+            <div className="flex flex-col gap-size-1 border-t border-bg-footer-lowest pt-size-1 text-label-medium above-mobile:flex-row above-mobile:items-center above-mobile:justify-between above-mobile:gap-size-2 above-mobile:pt-size-2 desktop-up:pt-size-3 above-mobile:text-body-small">
                 <p>© 2026 MiniGames. All rights reserved.</p>
                 <div className="flex items-center gap-size-2 above-mobile:contents">
                     <a
