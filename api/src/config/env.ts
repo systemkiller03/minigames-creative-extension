@@ -8,6 +8,8 @@ const schema = z
     PORT: z.coerce.number().int().positive().default(3000),
     DATABASE_URL: z.string().min(1),
     REDIS_URL: z.string().min(1),
+    /** Number of reverse proxies in front of the API; the client IP is read that many hops back. */
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(2),
     UPSTREAM_BASE_URL: z.string().min(1),
     UPSTREAM_TIMEOUT_MS: z.coerce.number().int().positive().default(5000),
     /** Domain of the synthetic per-user email sent upstream (never a real mailbox). */

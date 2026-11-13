@@ -1,0 +1,99 @@
+# Demo stack: everything runs on one host and is thrown away with it. Configuration comes from
+# deploy/.env, which infra/user-data.sh.tftpl generates at boot (random secrets, nothing stored).
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: minigames
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: minigames
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U minigames']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Demo inbox: verification and reset codes land here instead of a real mail provider.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    environment:
+      MP_WEBROOT: mailpit
+      MP_UI_AUTH: ${MAILPIT_USER}:${MAILPIT_PASSWORD}
+
+  migrate:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    command: ['node_modules/.bin/node-pg-migrate', 'up', '-m', 'migrations']
+    environment:
+      DATABASE_URL: postgres://minigames:${DB_PASSWORD}@postgres:5432/minigames
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  api:
+    build:
+      context: ..
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    # Written at boot only when Google sign-in is configured (all four values or none).
+    env_file:
+      - path: google.env
+        required: false
+    environment:
+      NODE_ENV: production
+      PORT: '3000'
+      # One proxy (Caddy) in front: reading further back would trust client-supplied headers.
+      TRUST_PROXY_HOPS: '1'
+      DATABASE_URL: postgres://minigames:${DB_PASSWORD}@postgres:5432/minigames
+      REDIS_URL: redis://redis:6379
+      UPSTREAM_BASE_URL: ${UPSTREAM_BASE_URL}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      CORS_ORIGINS: https://${SITE_ADDRESS}
+      SMTP_HOST: mailpit
+      SMTP_PORT: '1025'
+      SMTP_FROM: no-reply@${SITE_ADDRESS}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  # Serves the built frontend and proxies /api to the API on the same origin, so the
+  # SameSite refresh cookie works and no CORS is involved.
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - caddydata:/data
+    depends_on:
+      - api
+      - mailpit
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:

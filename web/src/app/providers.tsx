@@ -6,13 +6,13 @@ import { router } from './router';
 import { queryClient } from './query-client';
 
 export function AppProviders() {
-    return (
-        <QueryClientProvider client={queryClient}>
-            <SnackbarProvider>
-                <AuthProvider>
-                    <RouterProvider router={router} />
-                </AuthProvider>
-            </SnackbarProvider>
-        </QueryClientProvider>
-    );
+  return (
+    <QueryClientProvider client={queryClient}>
+      <SnackbarProvider>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
+      </SnackbarProvider>
+    </QueryClientProvider>
+  );
 }

@@ -1,6 +1,7 @@
 import express from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import { env } from '@/config/env';
 import { notFoundMiddleware, errorMiddleware } from '@/middlewares';
 import { corsMiddleware } from '@/middlewares/cors.middleware';
 import { appRouter } from '@/routers/app.router';
@@ -9,7 +10,7 @@ export function createApp() {
   const app = express();
 
   app.disable('x-powered-by');
-  app.set('trust proxy', 2);
+  app.set('trust proxy', env.TRUST_PROXY_HOPS);
 
   app.use(corsMiddleware);
   app.use(helmet());

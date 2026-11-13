@@ -1,0 +1,55 @@
+#!/bin/bash
+# Runs once at first boot. Everything is logged to /var/log/demo-bootstrap.log.
+set -euxo pipefail
+exec > >(tee -a /var/log/demo-bootstrap.log /dev/console) 2>&1
+
+# Safety net: power off (which terminates the instance) after the configured lifetime.
+shutdown -P +${lifetime}
+
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -y
+apt-get install -y docker.io docker-compose-v2 git curl openssl
+systemctl enable --now docker
+
+TOKEN=$(curl -sX PUT http://169.254.169.254/latest/api/token -H 'X-aws-ec2-metadata-token-ttl-seconds: 120')
+IP=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4)
+HOST='${domain}'
+if [ -z "$HOST" ]; then HOST="$(echo "$IP" | tr . -).sslip.io"; fi
+
+%{ if duckdns_token != "" ~}
+# DuckDNS: point the fixed name at this boot's public IP (the address changes on every deploy).
+set +x
+RESULT=$(curl -fsS "https://www.duckdns.org/update?domains=${duckdns_subdomain}&token=${duckdns_token}&ip=$IP")
+set -x
+[ "$RESULT" = "OK" ] || { echo "DuckDNS update failed: $RESULT"; exit 1; }
+%{ endif ~}
+
+git clone --depth 1 --branch '${ref}' '${repo}' /opt/minigames
+cd /opt/minigames/deploy
+
+# Secrets are generated here and never leave the instance.
+cat > .env <<ENV
+SITE_ADDRESS=$HOST
+UPSTREAM_BASE_URL=${upstream_base_url}
+DB_PASSWORD=$(openssl rand -hex 24)
+JWT_ACCESS_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+MAILPIT_USER=demo
+MAILPIT_PASSWORD=${mailpit_password}
+ENV
+chmod 600 .env
+
+%{ if google_client_id != "" ~}
+# Google sign-in: the redirect URI is derived from this boot's hostname; register it in Google.
+cat > google.env <<GOOGLE
+GOOGLE_CLIENT_ID=${google_client_id}
+GOOGLE_CLIENT_SECRET=${google_secret}
+GOOGLE_REDIRECT_URI=https://$HOST/api/auth/google/callback
+FRONTEND_AUTH_REDIRECT_URL=https://$HOST/
+GOOGLE
+chmod 600 google.env
+%{ endif ~}
+
+docker compose up -d --build
+docker compose ps
+echo "DEMO READY: https://$HOST"
