@@ -90,7 +90,7 @@ function DialogBody({ slug, fallbackDescription }: { slug: string; fallbackDescr
                 ) : null}
             </div>
             <div className="flex flex-col gap-size-3 p-size-3">
-                <div className="flex flex-col gap-size-1">
+                <div className="flex flex-col gap-size-1 above-mobile:flex-row above-mobile:items-center above-mobile:justify-between above-mobile:gap-size-2">
                     <h2
                         className="text-display-medium font-bold leading-normal text-on-primary"
                         id="game-dialog-title"
@@ -125,7 +125,7 @@ function DialogBody({ slug, fallbackDescription }: { slug: string; fallbackDescr
 
                 <div className="flex gap-size-2">
                     <button
-                        className="flex h-12 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-medium border-2 border-solid border-on-primary bg-primary px-size-3 text-label-large font-bold text-on-primary shadow-hard transition-colors duration-fast ease-fast hover:bg-primary-high focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring"
+                        className="flex h-12 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-medium border-2 border-solid border-on-primary bg-primary px-size-3 text-label-extra-large font-bold text-on-primary shadow-hard transition-colors duration-fast ease-fast hover:bg-primary-high focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring"
                         onClick={() => snackbar.info('Playing in the browser is coming soon.')}
                         type="button"
                     >
@@ -134,7 +134,7 @@ function DialogBody({ slug, fallbackDescription }: { slug: string; fallbackDescr
                     <button
                         aria-label={isFavorited ? 'Remove from favourites' : 'Add to favourites'}
                         aria-pressed={isFavorited}
-                        className="flex size-12 shrink-0 cursor-pointer items-center justify-center gap-size-1 rounded-medium border border-solid border-outline-variant bg-white text-label-large font-bold text-on-primary shadow-hard transition-colors duration-fast ease-fast hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring disabled:cursor-wait above-mobile:size-auto above-mobile:min-w-0 above-mobile:flex-1"
+                        className="flex size-12 shrink-0 cursor-pointer items-center justify-center gap-size-1 rounded-medium border border-solid border-outline-variant bg-white text-label-extra-large font-bold text-on-primary shadow-hard transition-colors duration-fast ease-fast hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-focus-ring-offset focus-visible:outline-focus-ring disabled:cursor-wait above-mobile:size-auto above-mobile:min-w-0 above-mobile:flex-1"
                         disabled={isPending}
                         onClick={() => toggle(game.slug, isFavorited)}
                         type="button"
