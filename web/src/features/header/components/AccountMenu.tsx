@@ -62,7 +62,7 @@ export function AccountMenu({ name, className = '', onSignOut }: AccountMenuProp
             </button>
             {open ? (
                 <ul
-                    className="absolute right-0 z-20 mt-size-1 min-w-dropdown-menu-min-width list-none overflow-hidden rounded-medium border-button border-solid border-on-primary bg-white shadow-[4px_4px_0_var(--color-on-primary)]"
+                    className="absolute right-0 top-full z-20 mt-size-1 min-w-dropdown-menu-min-width list-none overflow-hidden rounded-medium border-button border-solid border-on-primary bg-white shadow-[4px_4px_0_var(--color-on-primary)]"
                     id={menuId}
                 >
                     <li>

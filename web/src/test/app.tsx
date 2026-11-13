@@ -109,6 +109,39 @@ export function installBackend({
                 meta: { page, limit: 6, totalItems: totalPages * 6, totalPages },
             });
         }
+        if (/^\/catalog\/games\/[^/]+\/comments$/u.test(path)) {
+            if (method === 'POST') {
+                return jsonResponse(
+                    {
+                        data: {
+                            commentId: 'new-1',
+                            authorName: 'Ann',
+                            text: (JSON.parse(init.body as string) as { text: string }).text,
+                            likesCount: 0,
+                            isLikedByCurrentUser: false,
+                            createdAt: new Date().toISOString(),
+                        },
+                    },
+                    201,
+                );
+            }
+            return jsonResponse({
+                data: [
+                    {
+                        commentId: 'c1',
+                        authorName: 'Bob',
+                        text: 'Great game!',
+                        likesCount: 3,
+                        isLikedByCurrentUser: false,
+                        createdAt: '2026-01-01T00:00:00Z',
+                    },
+                ],
+                meta: { totalComments: 1 },
+            });
+        }
+        if (/^\/catalog\/comments\/[^/]+\/like$/u.test(path)) {
+            return jsonResponse({ data: { isLikedByCurrentUser: true, likesCount: 4 } });
+        }
         if (path.startsWith('/catalog/games/')) {
             const slug = decodeURIComponent(path.split('/').pop() ?? '');
             return jsonResponse({

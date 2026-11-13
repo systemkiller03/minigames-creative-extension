@@ -4,6 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useFavourite } from '@/features/favourites/useFavourite';
 import { getGameDetails, type Game, type GameDetails } from '@/shared/api/games.api';
 import { ApiError } from '@/shared/api/client';
+import { GameComments } from '@/features/library/components/GameComments';
 import { Icon } from '@/shared/components/Icon';
 import { Modal } from '@/shared/components/Modal';
 import { ErrorState } from '@/shared/components/ErrorState';
@@ -192,6 +193,8 @@ function DialogBody({ slug, fallbackDescription }: { slug: string; fallbackDescr
                         </ol>
                     </section>
                 ) : null}
+
+                <GameComments slug={game.slug} />
             </div>
         </>
     );
