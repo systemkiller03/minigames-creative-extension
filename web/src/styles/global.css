@@ -1,0 +1,43 @@
+@import 'tailwindcss';
+@import './theme.css';
+
+html {
+  min-width: 0;
+}
+
+body {
+  min-width: 0;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-on-bg);
+  font-family: var(--font-inter);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 24px;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-feature-settings: 'liga';
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
