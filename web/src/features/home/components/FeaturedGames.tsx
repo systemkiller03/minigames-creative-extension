@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getFeaturedGames } from '../api/home.api';
 import { Button } from '@/shared/components/Button';
 import { EmptyState } from '@/shared/components/EmptyState';
+import { Icon } from '@/shared/components/Icon';
 import { ErrorState } from '@/shared/components/ErrorState';
 import { LoadingState } from '@/shared/components/LoadingState';
 import { SectionHeading } from './SectionHeading';
@@ -176,7 +177,7 @@ export function FeaturedGames() {
     return (
         <section
             aria-labelledby="featured-games-title"
-            className="overflow-hidden bg-bg py-size-2 desktop:pt-size-4 desktop-up:px-size-15 desktop-up:py-size-5"
+            className="overflow-hidden bg-bg py-size-2 desktop:pt-size-4 tablet-up:py-size-3 desktop-up:px-size-15 desktop-up:py-size-5"
             onBlur={(event) => {
                 if (!event.currentTarget.contains(event.relatedTarget)) {
                     setIsPaused(false);
@@ -186,26 +187,26 @@ export function FeaturedGames() {
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
         >
-            <header className="mb-size-2 flex items-center justify-between px-size-2 desktop:mx-size-5 desktop:px-0 desktop-up:mx-0 desktop-up:mb-size-5">
+            <header className="mb-size-2 flex items-center justify-between px-size-2 desktop:mx-size-5 desktop:px-0 tablet-up:mb-size-3 desktop-up:mx-0 desktop-up:mb-size-5">
                 <SectionHeading id="featured-games-title">New Games</SectionHeading>
                 {games.length > 1 ? (
-                    <div className="flex items-center gap-size-1">
+                    <div className="flex items-center gap-size-1 tablet-up:gap-size-2">
                         <Button
                             aria-label="Previous games"
-                            className="size-touch-target rounded-full p-0 text-headline-small"
+                            className="size-icon-button-medium rounded-full bg-white p-0"
                             onClick={() => move(-1)}
                             size="sm"
                             variant="outline"
                         >
-                            <span aria-hidden="true">‹</span>
+                            <Icon className="text-[18px]" name="arrow_back" />
                         </Button>
                         <Button
                             aria-label="Next games"
-                            className="size-touch-target rounded-full p-0 text-headline-small"
+                            className="size-icon-button-medium rounded-full p-0"
                             onClick={() => move(1)}
                             size="sm"
                         >
-                            <span aria-hidden="true">›</span>
+                            <Icon className="text-[18px]" name="arrow_forward" />
                         </Button>
                     </div>
                 ) : null}
