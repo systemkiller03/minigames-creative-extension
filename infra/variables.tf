@@ -29,7 +29,7 @@ variable "git_ref" {
 variable "max_lifetime_minutes" {
   description = "Safety net: the instance powers off and terminates itself this long after boot."
   type        = number
-  default     = 30
+  default     = 60
 }
 
 variable "domain" {
@@ -42,6 +42,29 @@ variable "hosted_zone_id" {
   description = "Route 53 zone that contains `domain`. Required when `domain` is set."
   type        = string
   default     = ""
+}
+
+variable "duckdns_subdomain" {
+  description = "Free alternative to `domain`: a DuckDNS name (without .duckdns.org) that the instance points at itself on boot."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.duckdns_subdomain == "" || var.domain == ""
+    error_message = "Use either domain or duckdns_subdomain, not both."
+  }
+}
+
+variable "duckdns_token" {
+  description = "DuckDNS account token. Pass it as TF_VAR_duckdns_token. Required with duckdns_subdomain."
+  type        = string
+  default     = ""
+  sensitive   = true
+
+  validation {
+    condition     = (var.duckdns_subdomain == "") == (var.duckdns_token == "")
+    error_message = "Set duckdns_subdomain and duckdns_token together, or neither."
+  }
 }
 
 variable "allowed_cidrs" {

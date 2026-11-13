@@ -1,5 +1,5 @@
 locals {
-  host = var.domain != "" ? var.domain : "${replace(aws_instance.demo.public_ip, ".", "-")}.sslip.io"
+  host = local.fixed_host != "" ? local.fixed_host : "${replace(aws_instance.demo.public_ip, ".", "-")}.sslip.io"
 }
 
 output "url" {

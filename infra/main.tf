@@ -9,6 +9,11 @@ data "aws_ssm_parameter" "ubuntu_ami" {
   name = "/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id"
 }
 
+locals {
+  # A name that is known before the instance exists; empty means fall back to sslip.io.
+  fixed_host = var.domain != "" ? var.domain : (var.duckdns_subdomain != "" ? "${var.duckdns_subdomain}.duckdns.org" : "")
+}
+
 resource "random_password" "mailpit" {
   length  = 20
   special = false
@@ -135,7 +140,9 @@ resource "aws_instance" "demo" {
   user_data = templatefile("${path.module}/user-data.sh.tftpl", {
     repo              = var.git_repo_url
     ref               = var.git_ref
-    domain            = var.domain
+    domain            = local.fixed_host
+    duckdns_subdomain = var.duckdns_subdomain
+    duckdns_token     = var.duckdns_token
     lifetime          = var.max_lifetime_minutes
     upstream_base_url = var.upstream_base_url
     mailpit_password  = random_password.mailpit.result
