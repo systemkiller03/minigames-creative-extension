@@ -10,9 +10,9 @@ variable "name" {
 }
 
 variable "instance_type" {
-  description = "Images are built on the instance; two vCPUs keep that to a few minutes."
+  description = "Images are built on the instance, so it needs RAM and two vCPUs. m7i-flex.large is free-tier eligible."
   type        = string
-  default     = "t3.medium"
+  default     = "m7i-flex.large"
 }
 
 variable "git_repo_url" {

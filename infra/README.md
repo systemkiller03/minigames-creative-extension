@@ -30,7 +30,7 @@ should list only terminated instances.
 - `git_ref`: branch or tag to deploy; it must contain both `api/` and `web/`.
 - `max_lifetime_minutes` (default 60): the instance powers off and terminates itself this long
   after boot, so a forgotten demo cannot keep running. Includes the build time.
-- `instance_type` (default `t3.medium`): images are built on the instance, so two vCPUs help.
+- `instance_type` (default `m7i-flex.large`, free-tier eligible): images are built on the instance, so two vCPUs help.
 - `allowed_cidrs`: who can reach HTTPS (default everyone). Port 80 stays open for certificates.
 - `duckdns_subdomain` and `duckdns_token`: a free fixed name (`<name>.duckdns.org`) with no DNS setup in AWS;
   the instance updates the record with its new IP on every boot. Pass the token as `TF_VAR_duckdns_token`.
