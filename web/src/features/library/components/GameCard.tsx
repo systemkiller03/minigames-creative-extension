@@ -87,7 +87,7 @@ export function GameCard({ game }: { game: Game }) {
                         className={getButtonClassName(
                             'primary',
                             'md',
-                            'w-full min-[600px]:w-auto min-[600px]:px-button-small-x min-[600px]:py-button-small-y',
+                            'w-full min-[600px]:w-auto min-[600px]:max-[1199px]:px-button-small-x min-[600px]:max-[1199px]:py-button-small-y',
                         )}
                         search={(previous) => ({ ...previous, game: game.slug })}
                         to="/library"
