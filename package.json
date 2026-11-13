@@ -9,6 +9,7 @@
     "format:check": "prettier --check ."
   },
   "lint-staged": {
+    "*.tsx": "eslint --fix",
     "*.{ts,js}": [
       "eslint --fix",
       "prettier --write"
