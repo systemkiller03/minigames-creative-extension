@@ -146,7 +146,7 @@ export function SiteFooter() {
                     </a>
                     <a
                         className="inline-flex items-center gap-size-1 hover:text-white"
-                        href="https://github.com"
+                        href="https://github.com/systemkiller03"
                         rel="noreferrer noopener"
                         target="_blank"
                     >
@@ -156,7 +156,7 @@ export function SiteFooter() {
                         >
                             <Icon className="text-[14px] above-tablet:text-[16px]" name="code" />
                         </span>
-                        @student-nickname
+                        @systemkiller03
                     </a>
                 </div>
                 <p className="hidden above-mobile:block">Designed with love</p>
