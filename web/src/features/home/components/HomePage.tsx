@@ -4,12 +4,12 @@ import { HeroSection } from './HeroSection';
 import { Leaderboard } from './Leaderboard';
 
 export function HomePage() {
-    return (
-        <>
-            <HeroSection />
-            <FeaturedGames />
-            <Leaderboard />
-            <DeveloperCallout />
-        </>
-    );
+  return (
+    <>
+      <HeroSection />
+      <FeaturedGames />
+      <Leaderboard />
+      <DeveloperCallout />
+    </>
+  );
 }

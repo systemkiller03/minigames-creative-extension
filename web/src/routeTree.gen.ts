@@ -8,97 +8,97 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as LibraryRouteImport } from './routes/library'
-import { Route as FavouritesRouteImport } from './routes/favourites'
-import { Route as AccountRouteImport } from './routes/account'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as rootRouteImport } from './routes/__root';
+import { Route as LibraryRouteImport } from './routes/library';
+import { Route as FavouritesRouteImport } from './routes/favourites';
+import { Route as AccountRouteImport } from './routes/account';
+import { Route as IndexRouteImport } from './routes/index';
 
 const LibraryRoute = LibraryRouteImport.update({
   id: '/library',
   path: '/library',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const FavouritesRoute = FavouritesRouteImport.update({
   id: '/favourites',
   path: '/favourites',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AccountRoute = AccountRouteImport.update({
   id: '/account',
   path: '/account',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/favourites': typeof FavouritesRoute
-  '/library': typeof LibraryRoute
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/favourites': typeof FavouritesRoute;
+  '/library': typeof LibraryRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/favourites': typeof FavouritesRoute
-  '/library': typeof LibraryRoute
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/favourites': typeof FavouritesRoute;
+  '/library': typeof LibraryRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/account': typeof AccountRoute
-  '/favourites': typeof FavouritesRoute
-  '/library': typeof LibraryRoute
+  __root__: typeof rootRouteImport;
+  '/': typeof IndexRoute;
+  '/account': typeof AccountRoute;
+  '/favourites': typeof FavouritesRoute;
+  '/library': typeof LibraryRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/account' | '/favourites' | '/library'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/account' | '/favourites' | '/library'
-  id: '__root__' | '/' | '/account' | '/favourites' | '/library'
-  fileRoutesById: FileRoutesById
+  fileRoutesByFullPath: FileRoutesByFullPath;
+  fullPaths: '/' | '/account' | '/favourites' | '/library';
+  fileRoutesByTo: FileRoutesByTo;
+  to: '/' | '/account' | '/favourites' | '/library';
+  id: '__root__' | '/' | '/account' | '/favourites' | '/library';
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AccountRoute: typeof AccountRoute
-  FavouritesRoute: typeof FavouritesRoute
-  LibraryRoute: typeof LibraryRoute
+  IndexRoute: typeof IndexRoute;
+  AccountRoute: typeof AccountRoute;
+  FavouritesRoute: typeof FavouritesRoute;
+  LibraryRoute: typeof LibraryRoute;
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/library': {
-      id: '/library'
-      path: '/library'
-      fullPath: '/library'
-      preLoaderRoute: typeof LibraryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/library';
+      path: '/library';
+      fullPath: '/library';
+      preLoaderRoute: typeof LibraryRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/favourites': {
-      id: '/favourites'
-      path: '/favourites'
-      fullPath: '/favourites'
-      preLoaderRoute: typeof FavouritesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/favourites';
+      path: '/favourites';
+      fullPath: '/favourites';
+      preLoaderRoute: typeof FavouritesRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/account': {
-      id: '/account'
-      path: '/account'
-      fullPath: '/account'
-      preLoaderRoute: typeof AccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/account';
+      path: '/account';
+      fullPath: '/account';
+      preLoaderRoute: typeof AccountRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
   }
 }
 
@@ -107,7 +107,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   FavouritesRoute: FavouritesRoute,
   LibraryRoute: LibraryRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
